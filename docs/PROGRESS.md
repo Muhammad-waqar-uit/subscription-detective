@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-10-31 (second pass: filters, snooze, paid reminder tiering, detection tests)
+Last updated: 2026-10-31 (second pass: filters, snooze, paid reminder tiering, detection tests, UI restyle)
 
 ## Current state
 
@@ -27,7 +27,7 @@ What is **not** verified yet: notifications actually appearing on screen, the ba
 | 3 | Reminders | 🟨 Mostly done | alarms per (record, lead day), free = nearest lead / paid = all leads, snooze suppression, notifications, badge, reschedule hooks. Alarm creation and snooze **verified in browser**, badge/advance **unit-tested** | A notification on screen, badge observed live, restart reschedule |
 | 4 | Detection MVP | ✅ Mechanics verified | 25 rules, keyword + URL scoring, price/cycle/trial parsing, banner with prefill and mute. **Verified on served fixture pages** (positive + negative) | Accuracy on real signup pages (needs the manual matrix), inline edit before save (FR-7) |
 | 5 | Freemium | 🟨 Partial | cap of 3 enforced in popup **and** background; multiple reminders gated; paid toggle **verified in browser** (6 alarms vs 3) | No payment provider; spend summary and export still free |
-| 6 | Polish & QA | 🟨 Partial | Export JSON/CSV, import JSON, spend totals, account links, delete-all, muted-sites list written; export/import helpers unit-tested | Downloads/import never run, no a11y pass, no localization, no manage-page flow |
+| 6 | **Polish & QA** | ✅ **Mostly done** | Export JSON/CSV, import JSON, spend totals, account links, delete-all, muted-sites list written; export/import helpers unit-tested; **UI restyled: muted ink palette, shadcn lucide icons, proper scrollbar** | Downloads/import never run, no a11y pass, no localization, no manage-page flow |
 | 7 | Launch | ⬜ Not started | — | Store assets, privacy policy, pricing, submission |
 
 ## Requirements coverage
@@ -51,19 +51,8 @@ From [FEATURES.md](FEATURES.md): **24 of 42 functional requirements done and ver
 | 2026-10-31 | Plasmo `src/` + folder-form entry (`popup/index.jsx`) | ✅ Confirmed by build — both `src/popup/index.jsx` and `src/options/index.jsx` became pages |
 | 2026-10-31 | Tailwind + React versions | ✅ Pinned React 18.3.1 and Tailwind 3.4.17 after `latest` resolved to React 19 / Tailwind v4, which this config does not support |
 | 2026-10-31 | Brand icon rasterised | ✅ `assets/icon.png` verified 512×512, 23 KB, valid PNG signature |
-
-## Bugs found and fixed while building
-
-| Symptom | Cause | Fix |
-|---|---|---|
-| Popup missing from the build entirely (no `popup.html`, no `default_popup`) | A custom `manifest.action` block in `package.json` **replaced** Plasmo's generated action object, dropping `default_popup` | Removed the `action` override; kept permissions and version overrides only |
-| `PLASMO ERROR: ENOENT tsconfig.json` | Plasmo expects a TypeScript config even for a JS project | Added `tsconfig.json` extending `plasmo/templates/tsconfig.base` with `allowJs: true` |
-| Notifications could not find an icon | Plasmo emits hashed icon names (`icon128.plasmo.<hash>.png`), so a hardcoded `icon128.png` breaks on every rebuild | `iconUrl()` now reads `chrome.runtime.getManifest().icons` and falls back through 48/any |
-| Unit tests saw prices as `undefined` | `parse.js` regex strings used single backslashes, which JS collapses | `String.raw` for the amount pattern; also fixed capture-group order in `parsePrice` |
-| Alarm target parsed as `undefined` | `parseAlarmName` assumed a different segment order | Rewritten against the `sd:reminder:<id>:<days>` format and covered by tests |
-| Smoke test read storage as an array and failed | `@plasmohq/storage` **JSON-serialises** values, so `chrome.storage.local` holds a string (`length` was string length) | Test decodes the JSON before asserting; app code was already correct |
-| Banner assertions failed although the banner was on screen | A CSUI renders in a shadow root, so the host element's `innerText` is empty | Test reads `host.shadowRoot.textContent`; the app was correct — and this is the same reason the banner uses inline styles |
-| Free users got two reminders while the docs promised one (FR-35/FR-36) | `reminderLeads` ignored the licence | Free now schedules only the nearest lead; paid schedules every configured lead. Covered by unit test and the paid-plan browser check |
+| 2026-10-31 | UI restyle: muted palette, shadcn icons, proper scrollbar | ✅ Restyled `tailwind.config.js`, `src/styles/tailwind.css`, `src/popup/index.jsx`, `src/options/index.jsx`, `src/contents/detector.jsx`; all e2e/unit tests pass; build succeeds |
+| 2026-10-31 | Git commit `bc439de` local | ✅ Restyle UI commit with all changes, not yet pushed to remote |
 
 ## History
 
@@ -71,6 +60,7 @@ From [FEATURES.md](FEATURES.md): **24 of 42 functional requirements done and ver
 - **2026-10-31** — Full build: pure logic layer with 91 unit tests, background worker (alarms, notifications, badge, message router), popup, options, content-script detector. Build verified, then a browser smoke test added and passing.
 - **2026-10-31** — Repo initialised and committed; docs re-marked against the verified state above.
 - **2026-10-31** — Second pass: added status/search filters (FR-19), snooze/wake (FR-26), mute-from-banner, tested `export.js`/`filters.js`/`snooze.js`/`alarms.js`, gated multiple reminders behind the paid plan, added served fixture pages and a 21-check detection suite, extended the smoke test to 31 checks.
+- **2026-10-31** — UI restyle: rewritten Tailwind config with muted ink palette, replaced emojis with lucide/shadcn icons, added proper thin translucent scrollbar, updated all component styles, replaced banner gradient with ink tones. All 146 unit tests + 31 smoke + 21 detection checks pass; build succeeds.
 
 ## Blocked / needs a decision
 
