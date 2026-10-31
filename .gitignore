@@ -1,0 +1,10 @@
+node_modules/
+.plasmo/
+build/
+out/
+coverage/
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
