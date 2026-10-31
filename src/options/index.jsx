@@ -1,3 +1,15 @@
+import {
+  CreditCard,
+  Database,
+  Download,
+  Globe2,
+  ShieldCheck,
+  SlidersHorizontal,
+  Trash2,
+  Upload,
+  VolumeX,
+  X
+} from "lucide-react"
 import { useEffect, useState } from "react"
 
 import "../styles/tailwind.css"
@@ -14,6 +26,23 @@ function download(filename, content, type) {
   link.download = filename
   link.click()
   URL.revokeObjectURL(url)
+}
+
+function Section({ icon: Icon, title, description, children }) {
+  return (
+    <section className="rounded-xl border border-ink-200 bg-white p-5 shadow-card">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-ink-100 text-ink-600">
+          <Icon size={15} strokeWidth={1.75} />
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold tracking-tight text-ink-900">{title}</h2>
+          {description && <p className="mt-0.5 text-xs leading-relaxed text-ink-500">{description}</p>}
+        </div>
+      </div>
+      {children}
+    </section>
+  )
 }
 
 export default function Options() {
@@ -77,24 +106,31 @@ export default function Options() {
   }
 
   if (!settings) {
-    return <div className="p-8 text-sm text-slate-500">Loading…</div>
+    return <div className="p-8 text-sm text-ink-500">Loading…</div>
   }
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-8">
-      <header className="flex items-center justify-between">
+    <main className="mx-auto max-w-3xl space-y-5 p-8">
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Subscription Detective — settings</h1>
-          <p className="text-sm text-slate-500">
-            {subscriptions.length} record(s) · {caps?.paid ? "Paid plan" : `Free plan (limit ${FREE_LIMIT})`}
+          <h1 className="text-xl font-semibold tracking-tight text-ink-900">Subscription Detective — settings</h1>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-500">
+            <ShieldCheck size={14} strokeWidth={1.75} className="text-ink-400" />
+            {subscriptions.length} record(s) stored on this device ·{" "}
+            {caps?.paid ? "Paid plan" : `Free plan (limit ${FREE_LIMIT})`}
           </p>
         </div>
-        {status && <span className="rounded-md bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">{status}</span>}
+        {status && (
+          <span className="mt-1 rounded-lg border border-sage-100 bg-sage-50 px-3 py-1 text-xs font-medium text-sage-700">
+            {status}
+          </span>
+        )}
       </header>
 
-      <section className="card space-y-4">
-        <h2 className="text-sm font-semibold text-slate-900">Tracking</h2>
-
+      <Section
+        icon={SlidersHorizontal}
+        title="Tracking"
+        description="How records are priced and when you are reminded.">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="currency">Default currency</label>
@@ -124,69 +160,87 @@ export default function Options() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-2 text-sm">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-lg border border-ink-200 px-3 py-2 text-sm text-ink-700">
             <input
               type="checkbox"
-              className="!w-auto"
+              className="!w-auto accent-ink-800"
               checked={settings.notificationsEnabled !== false}
               onChange={(event) => persist({ notificationsEnabled: event.target.checked }, "Notifications updated")}
             />
             Desktop reminders
           </label>
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 rounded-lg border border-ink-200 px-3 py-2 text-sm text-ink-700">
             <input
               type="checkbox"
-              className="!w-auto"
+              className="!w-auto accent-ink-800"
               checked={settings.detectionEnabled !== false}
               onChange={(event) => persist({ detectionEnabled: event.target.checked }, "Detection updated")}
             />
             Detect signups on pages
           </label>
         </div>
-      </section>
+      </Section>
 
-      <section className="card space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Muted sites</h2>
-        <p className="text-xs text-slate-500">Subscription Detective never shows the tracking banner on these hosts.</p>
-
+      <Section
+        icon={VolumeX}
+        title="Muted sites"
+        description="Subscription Detective never shows the tracking banner on these hosts.">
         <div className="flex gap-2">
-          <input
-            value={mutedInput}
-            onChange={(event) => setMutedInput(event.target.value)}
-            placeholder="example.com"
-            aria-label="Site to mute"
-          />
+          <div className="relative flex-1">
+            <Globe2
+              size={14}
+              strokeWidth={1.75}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400"
+            />
+            <input
+              className="pl-8"
+              value={mutedInput}
+              onChange={(event) => setMutedInput(event.target.value)}
+              placeholder="example.com"
+              aria-label="Site to mute"
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault()
+                  addMutedSite()
+                }
+              }}
+            />
+          </div>
           <button className="btn-ghost shrink-0" onClick={addMutedSite}>Mute</button>
         </div>
 
-        <ul className="flex flex-wrap gap-2">
-          {(settings.mutedSites ?? []).length === 0 && <li className="text-xs text-slate-400">No muted sites.</li>}
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {(settings.mutedSites ?? []).length === 0 && <li className="text-xs text-ink-400">No muted sites.</li>}
           {(settings.mutedSites ?? []).map((site) => (
-            <li key={site} className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs">
+            <li key={site} className="flex items-center gap-1.5 rounded-full border border-ink-200 bg-ink-50 py-1 pl-3 pr-1.5 text-xs text-ink-600">
               {site}
-              <button className="text-slate-500 hover:text-red-600" onClick={() => removeMutedSite(site)} aria-label={`Unmute ${site}`}>
-                ×
+              <button
+                className="grid h-4 w-4 place-items-center rounded-full text-ink-400 transition-colors hover:bg-ink-200 hover:text-ink-800"
+                onClick={() => removeMutedSite(site)}
+                aria-label={`Unmute ${site}`}>
+                <X size={11} strokeWidth={2.25} />
               </button>
             </li>
           ))}
         </ul>
-      </section>
+      </Section>
 
-      <section className="card space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Plan</h2>
-        <p className="text-sm text-slate-600">
+      <Section icon={CreditCard} title="Plan">
+        <p className="text-sm leading-relaxed text-ink-600">
           {caps?.paid
             ? "Paid: unlimited records, multiple reminders, spend summaries and export."
             : `Free: up to ${FREE_LIMIT} active records, one reminder per charge. ${caps?.remaining} slot(s) left.`}
         </p>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs font-semibold text-slate-500" htmlFor="plan">License (development)</label>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-ink-500" htmlFor="plan">
+            License (development)
+          </label>
           <select
             id="plan"
-            className="!w-auto"
+            className="!w-auto !py-1 !text-xs"
             value={settings.license?.plan ?? "free"}
             onChange={(event) =>
               persist(
@@ -198,28 +252,34 @@ export default function Options() {
             <option value="paid">paid</option>
           </select>
         </div>
-      </section>
+      </Section>
 
-      <section className="card space-y-3">
-        <h2 className="text-sm font-semibold text-slate-900">Data</h2>
-        <p className="text-xs text-slate-500">Everything stays on this device. Exports are the only way data leaves the browser.</p>
-
+      <Section
+        icon={Database}
+        title="Data"
+        description="Everything stays on this device. Exports are the only way data leaves the browser.">
         <div className="flex flex-wrap gap-2">
           <button
             className="btn-ghost"
             onClick={() => download("subscriptions.json", toJson(subscriptions), "application/json")}>
+            <Download size={14} strokeWidth={1.75} />
             Export JSON
           </button>
           <button className="btn-ghost" onClick={() => download("subscriptions.csv", toCsv(subscriptions), "text/csv")}>
+            <Download size={14} strokeWidth={1.75} />
             Export CSV
           </button>
           <label className="btn-ghost cursor-pointer">
+            <Upload size={14} strokeWidth={1.75} />
             Import JSON
             <input type="file" accept="application/json" className="hidden" onChange={handleImport} />
           </label>
-          <button className="btn-danger" onClick={handleDeleteAll}>Delete all data</button>
+          <button className="btn-danger" onClick={handleDeleteAll}>
+            <Trash2 size={14} strokeWidth={1.75} />
+            Delete all data
+          </button>
         </div>
-      </section>
+      </Section>
     </main>
   )
 }

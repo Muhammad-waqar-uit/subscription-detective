@@ -1,3 +1,16 @@
+import {
+  ArrowUpRight,
+  Ban,
+  Bell,
+  BellOff,
+  Check,
+  ListFilter,
+  Pencil,
+  Plus,
+  Search,
+  Settings as SettingsIcon,
+  Trash2
+} from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
 import "../styles/tailwind.css"
@@ -11,10 +24,10 @@ import { getSettings, getSubscriptions, removeSubscription, upsertSubscription }
 import { applyStatusChange, createSubscription, sortByNextCharge, validateSubscription } from "../lib/subscription"
 
 const STATUS_STYLES = {
-  [STATUS.TRIAL]: "bg-amber-100 text-amber-800",
-  [STATUS.ACTIVE]: "bg-emerald-100 text-emerald-700",
-  [STATUS.CANCELLED]: "bg-slate-200 text-slate-600",
-  [STATUS.EXPIRED]: "bg-slate-200 text-slate-500"
+  [STATUS.TRIAL]: "pill-trial",
+  [STATUS.ACTIVE]: "pill-active",
+  [STATUS.CANCELLED]: "pill-muted",
+  [STATUS.EXPIRED]: "pill-muted"
 }
 
 const EMPTY_FORM = {
@@ -30,6 +43,16 @@ const EMPTY_FORM = {
   trialEndDate: "",
   category: "other",
   notes: ""
+}
+
+function extensionIcon() {
+  try {
+    const icons = chrome.runtime.getManifest().icons ?? {}
+    const path = icons[48] ?? icons[128] ?? Object.values(icons)[0]
+    return path ? chrome.runtime.getURL(path) : null
+  } catch {
+    return null
+  }
 }
 
 function dueLabel(subscription) {
@@ -56,6 +79,7 @@ export default function Popup() {
     [subscriptions, settings]
   )
   const visible = useMemo(() => filterSubscriptions(subscriptions, filter), [subscriptions, filter])
+  const icon = useMemo(extensionIcon, [])
 
   async function load() {
     const [list, currentSettings] = await Promise.all([getSubscriptions(), getSettings()])
@@ -117,50 +141,64 @@ export default function Popup() {
   }
 
   if (loading) {
-    return <div className="w-[380px] p-6 text-sm text-slate-500">Loading…</div>
+    return <div className="w-[380px] bg-ink-50 p-6 text-sm text-ink-500">Loading…</div>
   }
 
   return (
-    <div className="w-[380px] bg-slate-50">
-      <header className="flex items-center justify-between gap-2 bg-gradient-to-br from-brand-700 to-brand-900 px-4 py-3 text-white">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-white/15 text-sm">🔍</span>
+    <div className="w-[380px] bg-ink-50">
+      <header className="flex items-center justify-between gap-2 bg-ink-800 px-4 py-3 text-white">
+        <div className="flex items-center gap-2.5">
+          {icon ? (
+            <img src={icon} alt="" className="h-7 w-7 rounded-lg" />
+          ) : (
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-white/10">
+              <Search size={14} strokeWidth={2} />
+            </span>
+          )}
           <div>
-            <h1 className="text-sm font-semibold leading-tight">Subscription Detective</h1>
-            <p className="text-[11px] leading-tight text-brand-100">
-              {summary.count} tracked · {caps?.paid ? "paid" : "free"} plan
+            <h1 className="text-sm font-semibold leading-tight tracking-tight">Subscription Detective</h1>
+            <p className="text-[11px] leading-tight text-ink-300">
+              {summary.count} tracked · {caps?.paid ? "paid plan" : "free plan"}
             </p>
           </div>
         </div>
-        <button className="rounded-md bg-white/15 px-2 py-1 text-xs font-medium hover:bg-white/25" onClick={() => chrome.runtime.openOptionsPage()}>
+        <button
+          className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-xs font-medium text-ink-100 transition-colors hover:bg-white/10"
+          onClick={() => chrome.runtime.openOptionsPage()}
+          aria-label="Open settings">
+          <SettingsIcon size={13} strokeWidth={1.75} />
           Settings
         </button>
       </header>
 
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Per month</p>
-          <p className="text-lg font-semibold text-slate-900">{formatMoney(summary.monthly, settings?.defaultCurrency)}</p>
+      <div className="grid grid-cols-2 divide-x divide-ink-100 border-b border-ink-200 bg-white">
+        <div className="px-4 py-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-400">Per month</p>
+          <p className="text-lg font-semibold tracking-tight text-ink-900">
+            {formatMoney(summary.monthly, settings?.defaultCurrency)}
+          </p>
         </div>
-        <div className="text-right">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Per year</p>
-          <p className="text-sm font-medium text-slate-700">{formatMoney(summary.yearly, settings?.defaultCurrency)}</p>
+        <div className="px-4 py-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-400">Per year</p>
+          <p className="text-lg font-semibold tracking-tight text-ink-600">
+            {formatMoney(summary.yearly, settings?.defaultCurrency)}
+          </p>
         </div>
       </div>
 
       {form ? (
-        <form className="space-y-2 border-b border-slate-200 bg-white p-4" onSubmit={handleSave}>
+        <form className="space-y-2.5 border-b border-ink-200 bg-white p-4" onSubmit={handleSave}>
           <div>
             <label className="label" htmlFor="name">Service name</label>
             <input id="name" value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="Notion" />
-            {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
+            {errors.name && <p className="mt-1 text-xs text-rust-600">{errors.name}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="label" htmlFor="price">Price</label>
               <input id="price" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="10" inputMode="decimal" />
-              {errors.price && <p className="mt-1 text-xs text-red-600">{errors.price}</p>}
+              {errors.price && <p className="mt-1 text-xs text-rust-600">{errors.price}</p>}
             </div>
             <div>
               <label className="label" htmlFor="currency">Currency</label>
@@ -203,7 +241,7 @@ export default function Popup() {
             <div>
               <label className="label" htmlFor="customDays">Custom cycle (days)</label>
               <input id="customDays" value={form.customCycleDays} onChange={(event) => update("customCycleDays", event.target.value)} inputMode="numeric" />
-              {errors.customCycleDays && <p className="mt-1 text-xs text-red-600">{errors.customCycleDays}</p>}
+              {errors.customCycleDays && <p className="mt-1 text-xs text-rust-600">{errors.customCycleDays}</p>}
             </div>
           )}
 
@@ -215,7 +253,7 @@ export default function Popup() {
             <div>
               <label className="label" htmlFor="trialEnd">Trial ends</label>
               <input id="trialEnd" type="date" value={form.trialEndDate} onChange={(event) => update("trialEndDate", event.target.value)} />
-              {errors.trialEndDate && <p className="mt-1 text-xs text-red-600">{errors.trialEndDate}</p>}
+              {errors.trialEndDate && <p className="mt-1 text-xs text-rust-600">{errors.trialEndDate}</p>}
             </div>
           </div>
 
@@ -226,21 +264,32 @@ export default function Popup() {
 
           <div className="flex items-center justify-end gap-2 pt-1">
             <button type="button" className="btn-ghost" onClick={() => setForm(null)}>Cancel</button>
-            <button type="submit" className="btn-primary">Save</button>
+            <button type="submit" className="btn-primary">
+              <Check size={14} strokeWidth={2} />
+              Save
+            </button>
           </div>
         </form>
       ) : null}
 
       {subscriptions.length > 0 && (
-        <div className="space-y-2 border-b border-slate-200 bg-white px-3 py-2">
-          <input
-            id="search"
-            type="search"
-            value={filter.query}
-            onChange={(event) => setFilterField("query", event.target.value)}
-            placeholder="Search name, notes, URL"
-            aria-label="Search subscriptions"
-          />
+        <div className="space-y-2 border-b border-ink-200 bg-white px-3 py-2.5">
+          <div className="relative">
+            <Search
+              size={14}
+              strokeWidth={1.75}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400"
+            />
+            <input
+              id="search"
+              type="search"
+              className="pl-8"
+              value={filter.query}
+              onChange={(event) => setFilterField("query", event.target.value)}
+              placeholder="Search name, notes, URL"
+              aria-label="Search subscriptions"
+            />
+          </div>
 
           <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by status">
             {STATUS_FILTERS.map((option) => {
@@ -250,8 +299,10 @@ export default function Popup() {
                   key={option.value}
                   type="button"
                   aria-pressed={active}
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                    active ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                    active
+                      ? "bg-ink-800 text-white"
+                      : "bg-ink-100 text-ink-600 hover:bg-ink-200 hover:text-ink-800"
                   }`}
                   onClick={() => setFilterField("status", option.value)}>
                   {option.label}
@@ -260,30 +311,37 @@ export default function Popup() {
             })}
           </div>
 
-          <select
-            id="filterCategory"
-            aria-label="Filter by category"
-            className="!py-1 !text-xs"
-            value={filter.category}
-            onChange={(event) => setFilterField("category", event.target.value)}>
-            {CATEGORY_FILTERS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <ListFilter
+              size={13}
+              strokeWidth={1.75}
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400"
+            />
+            <select
+              id="filterCategory"
+              aria-label="Filter by category"
+              className="!py-1 pl-8 !text-xs text-ink-600"
+              value={filter.category}
+              onChange={(event) => setFilterField("category", event.target.value)}>
+              {CATEGORY_FILTERS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
 
-      <ul className="max-h-[320px] space-y-2 overflow-y-auto p-3">
+      <ul className="max-h-[300px] space-y-2 overflow-y-auto p-3">
         {subscriptions.length === 0 && (
-          <li className="card text-center text-sm text-slate-500">
+          <li className="card text-center text-sm text-ink-500">
             Nothing tracked yet. Visit a signup page and confirm the banner, or add one manually.
           </li>
         )}
 
         {subscriptions.length > 0 && visible.length === 0 && (
-          <li className="card text-center text-sm text-slate-500">
+          <li className="card text-center text-sm text-ink-500">
             No records match this filter.
-            <button className="ml-2 text-xs font-medium text-brand-700 hover:underline" onClick={() => setFilter(EMPTY_FILTER)}>
+            <button className="ml-2 text-xs font-medium text-ink-800 underline decoration-ink-300 underline-offset-2 hover:decoration-ink-800" onClick={() => setFilter(EMPTY_FILTER)}>
               Clear
             </button>
           </li>
@@ -295,79 +353,94 @@ export default function Popup() {
             <li key={subscription.id} className="card" data-id={subscription.id} data-status={subscription.status}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">{subscription.name}</p>
-                  <p className="text-xs text-slate-500">
-                    {formatMoney(subscription.price, subscription.currency)} / {subscription.billingCycle} · {dueLabel(subscription)}
+                  <p className="truncate text-sm font-semibold tracking-tight text-ink-900">{subscription.name}</p>
+                  <p className="text-xs text-ink-500">
+                    {formatMoney(subscription.price, subscription.currency)} / {subscription.billingCycle}
+                    <span className="mx-1 text-ink-300">·</span>
+                    {dueLabel(subscription)}
                   </p>
                   {snoozed && (
-                    <p className="mt-1 text-[11px] font-medium text-amber-700">
-                      🔕 Snoozed · {snoozeLabel(subscription)}
+                    <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-clay-700">
+                      <BellOff size={12} strokeWidth={1.75} />
+                      Snoozed · {snoozeLabel(subscription)}
                     </p>
                   )}
                 </div>
-                <span className={`pill ${STATUS_STYLES[subscription.status] ?? "bg-slate-100 text-slate-600"}`}>
+                <span className={STATUS_STYLES[subscription.status] ?? "pill-muted"}>
                   {subscription.status}
                 </span>
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-1">
-                <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => openForm(subscription)}>Edit</button>
+                <button className="icon-button" aria-label={`Edit ${subscription.name}`} onClick={() => openForm(subscription)}>
+                  <Pencil size={12} strokeWidth={1.75} />
+                  Edit
+                </button>
 
                 {LIVE_STATUSES.includes(subscription.status) && !snoozed &&
                   SNOOZE_OPTIONS.map((option) => (
                     <button
                       key={option.days}
-                      className="btn-ghost !px-2 !py-1 !text-xs"
+                      className="icon-button"
                       aria-label={`Snooze ${subscription.name} for ${option.label}`}
                       onClick={() => handleSnooze(subscription, option.days)}>
-                      Snooze {option.label === "1 day" ? "1d" : option.label === "3 days" ? "3d" : "1w"}
+                      <BellOff size={12} strokeWidth={1.75} />
+                      {option.days === 1 ? "1d" : option.days === 3 ? "3d" : "1w"}
                     </button>
                   ))}
 
                 {snoozed && (
-                  <button
-                    className="btn-ghost !px-2 !py-1 !text-xs"
-                    aria-label={`Wake ${subscription.name}`}
-                    onClick={() => handleWake(subscription)}>
+                  <button className="icon-button" aria-label={`Wake ${subscription.name}`} onClick={() => handleWake(subscription)}>
+                    <Bell size={12} strokeWidth={1.75} />
                     Wake
                   </button>
                 )}
 
                 {LIVE_STATUSES.includes(subscription.status) && (
-                  <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => handleStatus(subscription, STATUS.CANCELLED)}>
-                    Mark cancelled
+                  <button className="icon-button" aria-label={`Mark ${subscription.name} cancelled`} onClick={() => handleStatus(subscription, STATUS.CANCELLED)}>
+                    <Ban size={12} strokeWidth={1.75} />
+                    Cancelled
                   </button>
                 )}
 
                 {subscription.status === STATUS.TRIAL && (
-                  <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => handleStatus(subscription, STATUS.ACTIVE)}>
+                  <button className="icon-button" aria-label={`Mark ${subscription.name} converted`} onClick={() => handleStatus(subscription, STATUS.ACTIVE)}>
+                    <Check size={12} strokeWidth={2} />
                     Converted
                   </button>
                 )}
 
                 {(subscription.accountUrl || subscription.url) && (
                   <a
-                    className="btn-ghost !px-2 !py-1 !text-xs"
+                    className="icon-button"
                     href={subscription.accountUrl || subscription.url}
                     target="_blank"
-                    rel="noreferrer">
+                    rel="noreferrer"
+                    aria-label={`Open ${subscription.name} account page`}>
                     Account
+                    <ArrowUpRight size={12} strokeWidth={1.75} />
                   </a>
                 )}
 
-                <button className="btn-danger !px-2 !py-1 !text-xs" onClick={() => handleDelete(subscription)}>Delete</button>
+                <button className="icon-button hover:!border-rust-100 hover:!bg-rust-50 hover:!text-rust-600" aria-label={`Delete ${subscription.name}`} onClick={() => handleDelete(subscription)}>
+                  <Trash2 size={12} strokeWidth={1.75} />
+                </button>
               </div>
             </li>
           )
         })}
       </ul>
 
-      <footer className="flex items-center justify-between gap-2 border-t border-slate-200 bg-white px-3 py-2">
+      <footer className="border-t border-ink-200 bg-white px-3 py-2.5">
         {caps?.canAdd ? (
-          <button className="btn-primary w-full" onClick={() => openForm()}>Add subscription</button>
+          <button className="btn-primary w-full" onClick={() => openForm()}>
+            <Plus size={14} strokeWidth={2} />
+            Add subscription
+          </button>
         ) : (
           <button className="btn-primary w-full" onClick={() => chrome.runtime.openOptionsPage()}>
             Free limit reached — upgrade
+            <ArrowUpRight size={14} strokeWidth={2} />
           </button>
         )}
       </footer>

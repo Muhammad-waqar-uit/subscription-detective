@@ -1,3 +1,4 @@
+import { ScanSearch } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import { isSignupButton, scorePage } from "../lib/detect"
@@ -164,12 +165,12 @@ export default function DetectorBanner() {
         bottom: "20px",
         zIndex: 2147483647,
         width: "320px",
-        font: "13px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
-        color: "#0f172a",
+        font: "13px/1.45 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+        color: "#1e232b",
         background: "#ffffff",
-        border: "1px solid #e2e8f0",
-        borderRadius: "12px",
-        boxShadow: "0 12px 32px rgba(15, 23, 42, 0.18)",
+        border: "1px solid #dde1e8",
+        borderRadius: "14px",
+        boxShadow: "0 12px 32px rgba(30, 35, 43, 0.12)",
         padding: "14px"
       }}>
       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
@@ -177,27 +178,26 @@ export default function DetectorBanner() {
           style={{
             display: "grid",
             placeItems: "center",
-            width: "26px",
-            height: "26px",
+            width: "28px",
+            height: "28px",
             borderRadius: "8px",
-            background: "linear-gradient(135deg,#4338CA,#6D28D9)",
-            color: "#fff",
-            fontSize: "13px"
+            background: "#eef0f4",
+            color: "#2e343f"
           }}>
-          🔍
+          <ScanSearch size={15} strokeWidth={1.75} />
         </span>
         <strong style={{ fontSize: "13px" }}>Track this subscription?</strong>
       </div>
 
-      <p style={{ margin: "0 0 4px", color: "#334155" }}>
+      <p style={{ margin: "0 0 4px", color: "#414957" }}>
         <strong>{candidate.name}</strong> · {priceLabel}
         {hints?.billingCycle ? ` / ${hints.billingCycle}` : ""}
       </p>
       {hints?.trialDays ? (
-        <p style={{ margin: "0 0 8px", color: "#64748b", fontSize: "12px" }}>{hints.trialDays}-day trial detected</p>
+        <p style={{ margin: "0 0 8px", color: "#6d7688", fontSize: "12px" }}>{hints.trialDays}-day trial detected</p>
       ) : null}
 
-      {message ? <p style={{ margin: "0 0 8px", color: "#4338CA", fontSize: "12px" }}>{message}</p> : null}
+      {message ? <p style={{ margin: "0 0 8px", color: "#2e343f", fontSize: "12px" }}>{message}</p> : null}
 
       <div style={{ display: "flex", gap: "8px" }}>
         <button
@@ -208,7 +208,7 @@ export default function DetectorBanner() {
             padding: "7px 10px",
             borderRadius: "8px",
             border: "none",
-            background: busy ? "#a5b4fc" : "#4338CA",
+            background: busy ? "#979fae" : "#2e343f",
             color: "#fff",
             fontWeight: 600,
             cursor: busy ? "default" : "pointer"
@@ -221,9 +221,9 @@ export default function DetectorBanner() {
             flex: 1,
             padding: "7px 10px",
             borderRadius: "8px",
-            border: "1px solid #cbd5e1",
+            border: "1px solid #dde1e8",
             background: "#fff",
-            color: "#334155",
+            color: "#414957",
             cursor: "pointer"
           }}>
           Not now
@@ -238,7 +238,7 @@ export default function DetectorBanner() {
           padding: 0,
           border: "none",
           background: "none",
-          color: "#64748b",
+          color: "#6d7688",
           fontSize: "11px",
           textDecoration: "underline",
           cursor: busy ? "default" : "pointer"
@@ -246,7 +246,7 @@ export default function DetectorBanner() {
         Never show this on {candidate.host}
       </button>
 
-      <p style={{ margin: "8px 0 0", color: "#94a3b8", fontSize: "11px" }}>
+      <p style={{ margin: "8px 0 0", color: "#979fae", fontSize: "11px" }}>
         Stored on this device only. Nothing is sent anywhere.
       </p>
     </div>
