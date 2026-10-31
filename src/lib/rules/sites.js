@@ -68,3 +68,13 @@ export function isMutedHost(host, mutedSites = []) {
     return Boolean(value) && (target === value || target.endsWith(`.${value}`))
   })
 }
+
+/**
+ * Add a host to the muted list (FR-31). Normalises first so `https://Acme.com/x`
+ * and `acme.com` collapse to one entry, and returns a new array.
+ */
+export function addMutedSite(mutedSites = [], host) {
+  const value = normalizeHost(host)
+  if (!value) return [...(mutedSites ?? [])]
+  return [...new Set([...(mutedSites ?? []).map((site) => normalizeHost(site)).filter(Boolean), value])]
+}

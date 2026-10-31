@@ -4,7 +4,7 @@ Step-level checklist. **A box is ticked only when the thing was actually verifie
 
 `✅ done · 🟨 written but unverified · ⬜ not started · ⏸ blocked`
 
-Last updated: 2026-10-31
+Last updated: 2026-10-31 (second pass)
 
 ---
 
@@ -55,18 +55,20 @@ Last updated: 2026-10-31
 - [x] Options shell: default currency, detection on/off, notifications on/off, reminder timing — renders, zero page errors
 - [ ] Verify persistence across a real Chrome restart
 
-**Exit:** FR-12…FR-15, FR-40 verified. FR-12/13/14/17/40 done; FR-15 still open.
+**Exit:** FR-12…FR-14, FR-17, FR-19, FR-26, FR-40 verified. FR-15 (edit/delete/status in the browser) still open.
 
 ---
 
 ## Phase 3 — Reminders 🟨
 
 - [x] `src/background/alarms.js` — one alarm per (subscription, lead day), named `sd:reminder:<id>:<days>`
-- [x] Default lead times `[3, 1]` from settings — verified: both alarms created
+- [x] Default lead times `[3, 1]` from settings — paid schedules both (verified); free schedules only the nearest lead (verified)
 - [x] `chrome.notifications.create` with title/price/date and an "Open account" button — written, never seen on screen
-- [x] Badge count = charges in the next 7 days, cleared at zero — written, not observed
+- [x] Badge count = charges in the next 7 days, cleared at zero, snoozed records excluded — unit-tested, never seen on the toolbar
 - [x] Reschedule on `runtime.onStartup` and `onInstalled`; trial → active roll-forward on charge date — written, not exercised
-- [ ] Snooze 1 day (P2 — cut first) — **not implemented**
+- [x] Snooze (1 day / 3 days / 1 week) and Wake (FR-26) — verified: end date stored, that record's alarms cleared, card shows the label, Wake restores reminders
+- [x] Snooze suppresses notifications, alarm scheduling and the badge (one rule in `lib/snooze.js`, used by all three)
+- [x] Unit tests for the scheduler against a fake `chrome` API (`alarms.test.js`): names, leads, clearing, badge, trial roll-forward
 - [ ] Test: fires with the popup never opened; survives restart; no double fire
 
 **Exit:** a record dated +3 days notifies exactly once. **Not yet met** — alarm *creation* is verified, notification *delivery* is not.
@@ -81,14 +83,15 @@ Last updated: 2026-10-31
 - [x] Click listener on trial/subscribe buttons (FR-4)
 - [x] MutationObserver, throttled, for SPA route changes
 - [x] CSUI banner: "Track this subscription?" Confirm / Dismiss, inline styles (a CSUI shadow root does not receive Tailwind)
-- [x] Prefill + editable fields (FR-6, FR-7)
+- [x] Prefill on the banner (FR-6) — verified: name, `USD 12`, monthly, 14-day trial
+- [ ] Inline edit before saving (FR-7) — not in the banner; fields are editable after save via **Edit**
 - [x] Mute current site from the banner (FR-11)
 - [x] Everything wrapped in try/catch (NFR-7); no `innerHTML`, all page text rendered as text nodes (NFR-10)
 - [ ] Measure added load time (<50 ms, NFR-2)
 - [ ] Test on 10 real signup pages, record hit rate in PROGRESS
-- [ ] See the banner actually render (needs a fixture page — `tests/e2e/fixtures/` still empty)
+- [x] Fixture pages (`tests/fixtures/`) served over http by `tests/e2e/detection.mjs` — 21 checks: banner on the signup page, none on the about page, record saved, host muted from the banner
 
-**Exit:** ≥8/10 pages detected correctly, no page breakage. **Not measured.**
+**Exit:** ≥8/10 real pages detected correctly, no page breakage. Mechanics ✅ on fixtures; **real-page hit rate still unmeasured**.
 
 ---
 
@@ -100,21 +103,24 @@ Last updated: 2026-10-31
 - [x] License status shown in options ("Free plan (limit 3)") — verified in browser
 - [ ] Decide payment provider: ExtensionPay vs Stripe + backend → record the choice + reason in ARCHITECTURE
 - [ ] License check on startup against a provider, cached for offline (FR-38)
-- [ ] Gate paid features: multiple reminders, summaries, export (FR-36) — currently everything is available to free users
+- [x] Gate multiple reminders behind the paid plan (FR-36) — verified: free = 1 alarm, paid = 6 for 3 records
+- [ ] Gate spend summary and export behind the paid plan, or drop the claim from the listing copy
 - [ ] Test expired/cancelled license with network disabled
 
-**Exit:** free user capped at 3 ✅, paid uncapped ⬜, offline license resolves ⬜.
+**Exit:** free user capped at 3 ✅, paid uncapped ✅ (verified by switching the plan), offline license resolves ⬜ (nothing to resolve against).
 
 ---
 
 ## Phase 6 — Polish and QA 🟨
 
 - [ ] Accessibility: focus order, labels, contrast, keyboard-only walkthrough (NFR-6)
-- [ ] Export JSON + CSV, import JSON with preview (FR-30, FR-31) — written, never run
+- [x] Export JSON + CSV and import JSON, extracted to `lib/export.js` — CSV quoting, parse validation and merge are unit-tested
+- [ ] Trigger a real download and pick a real file (FR-30, FR-31) — never run through the file picker
 - [x] Spend totals monthly/yearly (FR-17) — verified in browser
 - [ ] Account-page links (FR-18) — rendered, never clicked
-- [ ] Filters by status/category (FR-19) — **not implemented**
-- [ ] Muted-sites list in options (FR-42) — written, not exercised
+- [x] Filters: search over name/notes/URL, status chips, category select, explicit empty state (FR-19) — verified in the smoke test, unit-tested in `filters.test.js`
+- [x] Mute the current host from the banner (FR-11) — verified in the detection suite
+- [ ] Remove a muted site from options (FR-42) — written, not exercised
 - [ ] Manage-subscription page detection flow (FR-8) — `isManagePage()` exists, no UI wired
 - [ ] Extend `docs/LIMITATIONS.md` with QA findings
 - [ ] Localization scaffolding, English strings extracted (NFR-9)

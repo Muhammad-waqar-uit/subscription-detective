@@ -140,6 +140,17 @@ export default function DetectorBanner() {
     }
   }
 
+  async function muteSite() {
+    setBusy(true)
+    try {
+      const response = await chrome.runtime.sendMessage({ type: "MUTE_SITE", host: candidate.host })
+      setMessage(response?.ok ? `Banner muted on ${candidate.host}.` : "Could not mute this site.")
+      window.setTimeout(() => setHidden(true), 1200)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const priceLabel =
     hints?.price !== null && hints?.price !== undefined
       ? `${hints.currency ?? ""} ${hints.price}`.trim()
@@ -218,6 +229,22 @@ export default function DetectorBanner() {
           Not now
         </button>
       </div>
+
+      <button
+        onClick={muteSite}
+        disabled={busy}
+        style={{
+          marginTop: "8px",
+          padding: 0,
+          border: "none",
+          background: "none",
+          color: "#64748b",
+          fontSize: "11px",
+          textDecoration: "underline",
+          cursor: busy ? "default" : "pointer"
+        }}>
+        Never show this on {candidate.host}
+      </button>
 
       <p style={{ margin: "8px 0 0", color: "#94a3b8", fontSize: "11px" }}>
         Stored on this device only. Nothing is sent anywhere.

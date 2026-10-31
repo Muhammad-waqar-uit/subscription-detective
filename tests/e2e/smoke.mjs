@@ -5,11 +5,12 @@
  *   node tests/e2e/smoke.mjs
  *
  * Covers: service worker start, popup/options render, manual add persisting to
- * chrome.storage.local, reminder alarms being scheduled by the background worker,
- * and the free-tier cap blocking the fourth record.
+ * chrome.storage.local, reminder alarms (free = one lead, paid = all leads),
+ * the free-tier cap blocking the fourth record, status/search filters, snooze and
+ * wake, and the paid-plan toggle.
  *
- * Not covered (needs the manual pass in docs/TESTING.md): real notifications firing,
- * detection against live sites, licensing against a payment provider.
+ * Detection has its own run: tests/e2e/detection.mjs. Still manual (see
+ * docs/TESTING.md): notifications appearing on screen, a real payment provider.
  */
 import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -39,6 +40,17 @@ async function addSubscription(page, name, price) {
   await page.waitForTimeout(400)
 }
 
+
+/** Alarm creation is async in the worker, so poll instead of guessing a delay. */
+async function waitForAlarms(page, expected) {
+  let alarms = []
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    alarms = await page.evaluate(() => chrome.alarms.getAll())
+    if (alarms.length >= expected) return alarms
+    await page.waitForTimeout(250)
+  }
+  return alarms
+}
 
 /** @plasmohq/storage stores values JSON-serialised, so decode before asserting. */
 async function readStored(page) {
@@ -90,18 +102,10 @@ try {
   check("add: next charge date computed", Boolean(stored[0]?.nextChargeDate), stored[0]?.nextChargeDate)
   check("add: status defaulted to active", stored[0]?.status === "active")
 
-  // --- reminder alarms scheduled by the background worker (FR-20, FR-21) ---
-  let alarms = []
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    alarms = await popup.evaluate(() => chrome.alarms.getAll())
-    if (alarms.length > 0) break
-    await popup.waitForTimeout(300)
-  }
-  check("alarms: reminders scheduled", alarms.length >= 2, `${alarms.length} alarm(s): ${alarms.map((a) => a.name).join(", ")}`)
-  check(
-    "alarms: use the 3-day/1-day lead times",
-    alarms.some((a) => a.name.endsWith(":3")) && alarms.some((a) => a.name.endsWith(":1"))
-  )
+  // --- reminder alarms scheduled by the background worker (FR-20, FR-21, FR-36) ---
+  const alarms = await waitForAlarms(popup, 1)
+  check("alarms: reminder scheduled", alarms.length === 1, `${alarms.length} alarm(s): ${alarms.map((a) => a.name).join(", ")}`)
+  check("alarms: free plan uses the nearest lead time only", alarms[0]?.name.endsWith(":1"), alarms[0]?.name)
 
   // --- free-tier cap (FR-34, FR-37) --------------------------------------
   await addSubscription(popup, "Figma", "12")
@@ -112,6 +116,48 @@ try {
   const bodyAfterThree = (await popup.textContent("body")) ?? ""
   check("cap: upgrade prompt replaces the add button", bodyAfterThree.includes("Free limit reached"))
   check("cap: existing records still listed", bodyAfterThree.includes("Canva") && bodyAfterThree.includes("Notion"))
+
+  // --- filters (FR-19) ---------------------------------------------------
+  await popup.fill("#search", "Canva")
+  await popup.waitForTimeout(250)
+  const filteredBody = (await popup.textContent("body")) ?? ""
+  check("filter: search narrows the list", filteredBody.includes("Canva") && !filteredBody.includes("Notion"))
+
+  await popup.fill("#search", "zzz-not-a-service")
+  await popup.waitForTimeout(250)
+  check("filter: explains an empty result", ((await popup.textContent("body")) ?? "").includes("No records match"))
+
+  await popup.getByRole("button", { name: "Clear", exact: true }).click()
+  await popup.waitForTimeout(250)
+  check("filter: clear restores the list", ((await popup.textContent("body")) ?? "").includes("Notion"))
+
+  await popup.getByRole("button", { name: "Cancelled", exact: true }).click()
+  await popup.waitForTimeout(250)
+  check("filter: status chip hides non-matching records", (await popup.locator("li[data-id]").count()) === 0)
+
+  await popup.getByRole("button", { name: "All", exact: true }).click()
+  await popup.waitForTimeout(250)
+  check("filter: status chip restores the list", (await popup.locator("li[data-id]").count()) === 3)
+
+  // --- snooze (FR-26) ----------------------------------------------------
+  await popup.getByRole("button", { name: "Snooze Canva for 1 day" }).click()
+  await popup.waitForTimeout(500)
+
+  const canva = (await readStored(popup)).find((item) => item.name === "Canva")
+  check("snooze: record stores an end date", Boolean(canva?.snoozedUntil), canva?.snoozedUntil)
+  check("snooze: card says so", ((await popup.textContent("body")) ?? "").includes("Snoozed"))
+
+  const afterSnooze = await popup.evaluate(() => chrome.alarms.getAll())
+  check(
+    "snooze: that record's reminders are cleared",
+    !afterSnooze.some((alarm) => alarm.name.includes(canva?.id)),
+    `${afterSnooze.length} alarm(s) left`
+  )
+
+  await popup.getByRole("button", { name: "Wake Canva" }).click()
+  await popup.waitForTimeout(500)
+  const woken = (await readStored(popup)).find((item) => item.name === "Canva")
+  check("snooze: wake removes the end date", !woken?.snoozedUntil, String(woken?.snoozedUntil))
 
   check("popup: no page errors", popupErrors.length === 0, popupErrors.slice(0, 2).join(" | "))
 
@@ -126,6 +172,15 @@ try {
   check("options renders", optionsBody.includes("settings"))
   check("options shows the record count", optionsBody.includes("3 record(s)"), optionsBody.match(/\\d+ record\\(s\\)/)?.[0])
   check("options shows the free limit", optionsBody.includes("limit 3"))
+  // --- paid tier (FR-35, FR-36) -----------------------------------------
+  await options.selectOption("#plan", "paid")
+  await options.waitForTimeout(800)
+  check("plan: paid state persists", ((await options.textContent("body")) ?? "").includes("Paid"))
+
+  const paidAlarms = await waitForAlarms(options, 6)
+  check("plan: paid schedules every lead time", paidAlarms.length === 6, `${paidAlarms.length} alarm(s)`)
+  check("plan: paid includes the 3-day lead", paidAlarms.some((alarm) => alarm.name.endsWith(":3")))
+
   check("options: no page errors", optionErrors.length === 0, optionErrors.slice(0, 2).join(" | "))
 } catch (error) {
   console.error("SMOKE ERROR:", error.message)

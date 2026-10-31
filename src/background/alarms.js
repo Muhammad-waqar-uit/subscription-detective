@@ -1,5 +1,7 @@
 import { BADGE_WINDOW_DAYS, LIVE_STATUSES, STATUS } from "../lib/constants"
+import { isPaid } from "../lib/license"
 import { reminderAt, rollForward } from "../lib/schedule"
+import { isSnoozed } from "../lib/snooze"
 
 export const ALARM_PREFIX = "sd:reminder"
 
@@ -28,10 +30,17 @@ async function clearReminderAlarms() {
   )
 }
 
-export function reminderLeads(settings) {
+/**
+ * Lead times to schedule. Free gets a single reminder (the nearest one) because
+ * multiple reminders are a paid capability (FR-36); paid gets every lead time.
+ */
+export function reminderLeads(settings, license = settings?.license) {
   const leads = settings?.reminderDaysBefore
-  if (!Array.isArray(leads) || leads.length === 0) return [3, 1]
-  return leads.filter((days) => Number.isFinite(Number(days)) && Number(days) >= 0).map(Number)
+  const configured = Array.isArray(leads) && leads.length ? leads : [3, 1]
+  const valid = configured.filter((days) => Number.isFinite(Number(days)) && Number(days) >= 0).map(Number)
+
+  if (valid.length <= 1 || isPaid(license)) return valid
+  return [Math.min(...valid)]
 }
 
 /**
@@ -48,10 +57,15 @@ export async function syncAlarms(subscriptions, settings, now = new Date()) {
 
   const leads = reminderLeads(settings)
   let scheduled = 0
+  let snoozed = 0
 
   for (const subscription of subscriptions ?? []) {
     if (!LIVE_STATUSES.includes(subscription?.status)) continue
     if (subscription?.reminderDisabled) continue
+    if (isSnoozed(subscription, now)) {
+      snoozed += 1
+      continue
+    }
 
     for (const days of leads) {
       const at = reminderAt(subscription, days)
@@ -61,13 +75,14 @@ export async function syncAlarms(subscriptions, settings, now = new Date()) {
     }
   }
 
-  return { scheduled }
+  return { scheduled, snoozed }
 }
 
 /** Badge = live charges due within the window (FR-24). */
 export async function updateBadge(subscriptions, now = new Date()) {
   const due = (subscriptions ?? []).filter((subscription) => {
     if (!LIVE_STATUSES.includes(subscription?.status)) return false
+    if (isSnoozed(subscription, now)) return false
     const target = subscription.trialEndDate || subscription.nextChargeDate
     if (!target) return false
     const date = new Date(target)

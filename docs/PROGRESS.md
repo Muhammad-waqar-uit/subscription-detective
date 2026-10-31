@@ -1,36 +1,38 @@
 # Progress
 
-Last updated: 2026-10-31
+Last updated: 2026-10-31 (second pass: filters, snooze, paid reminder tiering, detection tests)
 
 ## Current state
 
-**The extension is built, loads in Chromium, and behaves correctly in the paths that are automated.** `npx plasmo build` produces a loadable `build/chrome-mv3-prod/`, 91 unit tests pass, and a Playwright smoke test loads the real extension and drives the popup.
+**The extension is built and its main flows are now exercised in a real browser.** `npx plasmo build` produces a loadable `build/chrome-mv3-prod/`, 146 unit tests pass, and two Playwright suites drive the real extension: one for the popup/options flows (31 checks) and one for detection on served fixture pages (21 checks).
 
-What is **not** verified yet: notifications actually appearing on screen, detection against live signup pages, export/import round-trip, accessibility, content-script load budget, and anything paid (no payment provider is wired).
+What is **not** verified yet: notifications actually appearing on screen, the badge on the toolbar, restart reschedule, export/import through the file picker, accessibility, content-script load budget, and anything paid beyond a locally flipped licence.
 
 | Check | Result |
 |---|---|
-| `npx vitest run` | ✅ 6 files, **91 tests passed** (2.4 s) |
-| `npx plasmo build` | ✅ DONE ~5 s → `build/chrome-mv3-prod/` |
-| `node tests/e2e/smoke.mjs` | ✅ **19/19 checks passed** in a real Chromium with the extension loaded |
-| `git log` | ✅ repo initialised, first commit `e55be73` |
+| `npm run lint` | ✅ 0 errors, 0 warnings |
+| `npm test` (vitest) | ✅ 10 files, **146 tests passed** |
+| `npm run build` | ✅ DONE ~5 s → `build/chrome-mv3-prod/` |
+| `node tests/e2e/smoke.mjs` | ✅ **31/31 checks** |
+| `node tests/e2e/detection.mjs` | ✅ **21/21 checks** |
+| `npm run test:all` | ✅ vitest → build → both browser suites, green |
 
 ## Phase status
 
 | # | Phase | Status | Evidence | What is left |
 |---|-------|--------|----------|--------------|
 | 0 | Documentation & structure | ✅ Done | 9 docs, folder tree, brand assets | — |
-| 1 | Setup | ✅ Done | deps installed, `package.json` scripts + manifest overrides, Tailwind, ESLint/Prettier, `tsconfig.json` (Plasmo requires one even for JS), `.gitignore`, `git init` + first commit, build succeeds | CI workflow (needs a remote), `lint`/`format` never run yet |
-| 2 | Core storage & UI | 🟨 Mostly done | `storage.js`, `schedule.js`, `currency.js`, `subscription.js`; popup list/add/edit/delete/status; options shell. Add + persist + sorted list **verified in browser** | Edit, delete and status change are implemented but not exercised in the smoke test; persistence across a real Chrome restart not checked |
-| 3 | Reminders | 🟨 Mostly done | `background/alarms.js` + `index.js`: alarms per (record, lead day), notifications, badge, `onStartup`/`onInstalled` reschedule. Alarms with 3-day and 1-day leads **verified in browser** | A notification firing on screen, badge count, restart reschedule and snooze (FR-26, not implemented) |
-| 4 | Detection MVP | 🟨 Implemented, unverified live | 25 site rules, keyword + URL scoring, price/cycle/trial parsing, JSON-LD, click listener, throttled MutationObserver, CSUI banner with prefill/mute | Detection accuracy on real signup pages (needs the manual matrix), banner never seen rendered |
-| 5 | Freemium | 🟨 Partial | `license.js` gate used by popup **and** background; cap of 3 **verified in browser**; license status shown in options | No payment provider, so "paid" can only be faked locally; reminder/export tiering not gated |
-| 6 | Polish & QA | 🟨 Partial | Export JSON/CSV, import JSON, spend totals, account links, delete-all, muted-sites list all written | Export/import never run, no a11y pass, no filters (FR-19), no localization |
+| 1 | Setup | ✅ Done | deps, scripts, manifest overrides, Tailwind, ESLint/Prettier, `tsconfig.json`, `.gitignore`, git, build | CI workflow (needs a remote) |
+| 2 | Core storage & UI | 🟨 Mostly done | `storage/schedule/currency/subscription/filters`; popup list/add/filter/snooze; options shell. Add, persist, filter and snooze **verified in browser** | Edit, delete and status change are implemented but never driven; persistence across a real Chrome restart not checked |
+| 3 | Reminders | 🟨 Mostly done | alarms per (record, lead day), free = nearest lead / paid = all leads, snooze suppression, notifications, badge, reschedule hooks. Alarm creation and snooze **verified in browser**, badge/advance **unit-tested** | A notification on screen, badge observed live, restart reschedule |
+| 4 | Detection MVP | ✅ Mechanics verified | 25 rules, keyword + URL scoring, price/cycle/trial parsing, banner with prefill and mute. **Verified on served fixture pages** (positive + negative) | Accuracy on real signup pages (needs the manual matrix), inline edit before save (FR-7) |
+| 5 | Freemium | 🟨 Partial | cap of 3 enforced in popup **and** background; multiple reminders gated; paid toggle **verified in browser** (6 alarms vs 3) | No payment provider; spend summary and export still free |
+| 6 | Polish & QA | 🟨 Partial | Export JSON/CSV, import JSON, spend totals, account links, delete-all, muted-sites list written; export/import helpers unit-tested | Downloads/import never run, no a11y pass, no localization, no manage-page flow |
 | 7 | Launch | ⬜ Not started | — | Store assets, privacy policy, pricing, submission |
 
 ## Requirements coverage
 
-From [FEATURES.md](FEATURES.md): **18 of 42 functional requirements done and verified**, 20 implemented but still unverified, 4 not implemented (FR-19 filters, FR-26 snooze, FR-33 sync/post-v1, FR-39 pricing).
+From [FEATURES.md](FEATURES.md): **24 of 42 functional requirements done and verified**, 16 implemented but still unverified, 2 not implemented (FR-33 sync/post-v1, FR-39 pricing).
 
 ## Verification log
 
@@ -38,9 +40,13 @@ From [FEATURES.md](FEATURES.md): **18 of 42 functional requirements done and ver
 
 | Date | Check | Result |
 |---|---|---|
-| 2026-10-31 | `node tests/e2e/smoke.mjs` | ✅ 19/19 — SW starts, popup/options render with zero page errors, add persists (`nextChargeDate 2026-11-30`), two alarms `sd:reminder:<id>:3` and `:1` created, 4th record blocked with the upgrade prompt, options reports `3 record(s) · limit 3` |
+| 2026-10-31 | `npm run test:all` | ✅ 146 unit tests, build, 31 smoke checks, 21 detection checks |
+| 2026-10-31 | `node tests/e2e/detection.mjs` | ✅ 21/21 — no banner on the about fixture; banner on `/signup` with `Acme Analytics · USD 12 / monthly` and `14-day trial detected`; saved record has `price 12`, `status trial`, `trialEndDate` exactly +14 days, `detectedAutomatically true`; "Never show this on 127.0.0.1" wrote `mutedSites` and the banner stayed away after reload |
+| 2026-10-31 | `node tests/e2e/smoke.mjs` | ✅ 31/31 — free plan schedules exactly one alarm at the 1-day lead; search + status chips filter and clear; snooze stored `2026-11-01` and cleared that record's alarms; Wake removed it; switching to paid scheduled 6 alarms including the 3-day lead |
+| 2026-10-31 | `npm test` | ✅ 10 files / 146 tests — added `snooze`, `filters`, `export`, `alarms` suites |
+| 2026-10-31 | `npm run lint` | ✅ clean |
+| 2026-10-31 | `node tests/e2e/smoke.mjs` (first pass) | ✅ 19/19 — SW starts, popup/options render with zero page errors, add persists (`nextChargeDate 2026-11-30`), 4th record blocked with the upgrade prompt, options reports `3 record(s) · limit 3` |
 | 2026-10-31 | `npx plasmo build` → inspect `manifest.json` | ✅ `manifest_version 3`, `permissions [storage, alarms, notifications]`, `default_popup popup.html`, `options_ui options.html`, SW `static/background/index.js`, content script `<all_urls>`, 5 icon sizes, `minimum_chrome_version 116`, no `host_permissions` key |
-| 2026-10-31 | `npx vitest run` | ✅ 6 files / 91 tests |
 | 2026-10-31 | `git init` + `git add -A` | ✅ 50 files staged; `node_modules/`, `build/`, `.plasmo/` correctly ignored |
 | 2026-10-31 | Plasmo `src/` + folder-form entry (`popup/index.jsx`) | ✅ Confirmed by build — both `src/popup/index.jsx` and `src/options/index.jsx` became pages |
 | 2026-10-31 | Tailwind + React versions | ✅ Pinned React 18.3.1 and Tailwind 3.4.17 after `latest` resolved to React 19 / Tailwind v4, which this config does not support |
@@ -56,12 +62,15 @@ From [FEATURES.md](FEATURES.md): **18 of 42 functional requirements done and ver
 | Unit tests saw prices as `undefined` | `parse.js` regex strings used single backslashes, which JS collapses | `String.raw` for the amount pattern; also fixed capture-group order in `parsePrice` |
 | Alarm target parsed as `undefined` | `parseAlarmName` assumed a different segment order | Rewritten against the `sd:reminder:<id>:<days>` format and covered by tests |
 | Smoke test read storage as an array and failed | `@plasmohq/storage` **JSON-serialises** values, so `chrome.storage.local` holds a string (`length` was string length) | Test decodes the JSON before asserting; app code was already correct |
+| Banner assertions failed although the banner was on screen | A CSUI renders in a shadow root, so the host element's `innerText` is empty | Test reads `host.shadowRoot.textContent`; the app was correct — and this is the same reason the banner uses inline styles |
+| Free users got two reminders while the docs promised one (FR-35/FR-36) | `reminderLeads` ignored the licence | Free now schedules only the nearest lead; paid schedules every configured lead. Covered by unit test and the paid-plan browser check |
 
 ## History
 
 - **2026-10-31** — Requirements reviewed (v0.1). Stack fixed: Plasmo + JS/JSX + React, `@plasmohq/storage` / `@plasmohq/messaging`, `chrome.alarms` + `chrome.notifications`, date-fns, Vitest. Folder tree + 9 docs written.
 - **2026-10-31** — Full build: pure logic layer with 91 unit tests, background worker (alarms, notifications, badge, message router), popup, options, content-script detector. Build verified, then a browser smoke test added and passing.
 - **2026-10-31** — Repo initialised and committed; docs re-marked against the verified state above.
+- **2026-10-31** — Second pass: added status/search filters (FR-19), snooze/wake (FR-26), mute-from-banner, tested `export.js`/`filters.js`/`snooze.js`/`alarms.js`, gated multiple reminders behind the paid plan, added served fixture pages and a 21-check detection suite, extended the smoke test to 31 checks.
 
 ## Blocked / needs a decision
 

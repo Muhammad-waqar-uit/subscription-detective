@@ -13,9 +13,12 @@
     "package": "plasmo package",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node tests/e2e/smoke.mjs",
+    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/detection.mjs",
     "lint": "eslint src tests --ext .js,.jsx",
-    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"tests/**/*.js\" \"*.{js,mjs,json}\""
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"tests/**/*.js\" \"*.{js,mjs,json}\"",
+    "test:e2e:smoke": "node tests/e2e/smoke.mjs",
+    "test:e2e:detect": "node tests/e2e/detection.mjs",
+    "test:all": "vitest run && npm run build && node tests/e2e/smoke.mjs && node tests/e2e/detection.mjs"
   },
   "dependencies": {
     "@plasmohq/messaging": "^0.7.2",

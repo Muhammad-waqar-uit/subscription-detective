@@ -16,24 +16,25 @@ Written as design first; updated 2026-10-31 once the code existed, so the module
 | Notifications | `chrome.notifications` | Desktop reminder with an "open account" button |
 | Dates | `date-fns` | Renewal maths without a moment-sized bundle |
 | Payments | — not wired | See open decisions |
-| Tests | Vitest (unit), Playwright (e2e, bundled Chromium) | `lib/` is pure, so most coverage is cheap unit tests |
+| Tests | Vitest (unit), Playwright (e2e, bundled Chromium) | `lib/` is pure, so most coverage is cheap unit tests; the browser suites cover popup/options and detection separately |
 
 ## Module map
 
 ```
-popup/index.jsx ─┐                     lib/storage.js ── chrome.storage.local
-options/index.jsx┼─ lib/* (pure) ───── lib/schedule.js ─┐
-                 │                     lib/license.js   │
+popup/index.jsx ─┐   lib/storage.js ── chrome.storage.local
+                 ├─  lib/schedule.js, currency.js, subscription.js
+options/index.jsx┘   lib/license.js, filters.js, snooze.js, export.js   (all pure)
                  └─ sendMessage ─────► background/index.js ── chrome.alarms
                                             │                  chrome.notifications
                                             └── badge / onStartup reschedule
 contents/detector.jsx ── lib/detect.js + lib/parse.js + lib/rules/*
-                          └── CSUI banner ── user confirms ── SAVE_DETECTED ── background
+                          └── CSUI banner ── confirm ── SAVE_DETECTED ── background
+                                          └── mute ───── MUTE_SITE ───── settings.mutedSites
 ```
 
 Hard rules, all respected in the current code:
 
-- **`lib/` holds no React and no direct `chrome.*` calls** except `storage.js`, which wraps the API. Everything else takes data and returns data — that is what makes 91 unit tests possible without a browser.
+- **`lib/` holds no React and no direct `chrome.*` calls** except `storage.js`, which wraps the API. Everything else takes data and returns data — that is what makes 146 unit tests possible without a browser.
 - **The background is the enforcement point.** The popup also checks the cap so the UI can explain itself, but `SAVE_DETECTED` is rejected there, so a second code path cannot bypass the free limit.
 - **The content script never writes storage.** It detects, shows a banner, and sends a candidate to the background.
 
@@ -41,8 +42,8 @@ Hard rules, all respected in the current code:
 
 1. **Storage** — key `subscriptions` holds `Subscription[]` (§5.1), key `settings` holds §5.2 (default currency, reminder days, notifications on/off, detection on/off). `@plasmohq/storage` writes each value as a **JSON string** into `chrome.storage.local`; anything reading the raw API (tests, debugging, future migrations) must `JSON.parse` it.
 2. **Detection** — `detectCandidate(document, url, mutedSites)` returns `{ name, price, currency, trialDays, confidence, evidence[] }` or `null`. Layered: site rules → keywords → URL patterns → price/date parsing → user confirmation (§8). Never auto-saves.
-3. **Scheduling** — on any save or status change: cancel the record's existing alarms, compute reminder times from `settings.reminderDaysBefore` and `nextChargeDate`, create one alarm per lead day, named `sd:reminder:<id>:<days>`.
-4. **Firing** — alarm → read record → skip unless status is live (`trial`/`active`) → `chrome.notifications.create` with an account button → badge recount.
+3. **Scheduling** — on any save or status change: cancel every reminder alarm, recompute from `settings.reminderDaysBefore` and `nextChargeDate`, and create one alarm per lead day named `sd:reminder:<id>:<days>`. A free licence schedules only the nearest lead (FR-36); a paid licence schedules all of them. Snoozed records (FR-26) are skipped entirely.
+4. **Firing** — alarm → read record → skip unless status is live (`trial`/`active`), not reminder-disabled and not snoozed → `chrome.notifications.create` with an account button → badge recount. The badge ignores snoozed records too, so a snooze means quiet everywhere.
 5. **Restart/update** — `onStartup` and `onInstalled` rebuild every alarm from stored data, because alarms and worker state do not survive.
 6. **Trial → paid** — when the charge date passes and status is `trial`, `rollForward` flips it to `active` and reschedules. There is no charge verification in v1.
 
@@ -89,6 +90,8 @@ static/background/index.js         icon16/32/48/64/128.plasmo.<hash>.png
 | Banner uses inline styles | CSUI renders inside a shadow root, so the popup's Tailwind stylesheet does not apply |
 | React 18 / Tailwind 3 pinned | v19 / v4 are incompatible with this Plasmo version and PostCSS config respectively |
 | Free cap checked in popup **and** background | Single visible enforcement point (background) plus a UI that can explain the limit |
+| Snooze is a field, not a status | `snoozedUntil` silences reminders while the record still reads `trial`/`active`, so spend totals and charge dates stay true |
+| Filters/search are pure functions (`lib/filters.js`) | Keeps the popup a view and lets the filter rules be unit-tested |
 
 ## Open decisions
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import "../styles/tailwind.css"
 import { FREE_LIMIT } from "../lib/constants"
 import { formatMoney } from "../lib/currency"
+import { mergeImported, parseImport, toCsv, toJson } from "../lib/export"
 import { capabilities } from "../lib/license"
 import { getSettings, getSubscriptions, saveSettings, saveSubscriptions, wipeAll } from "../lib/storage"
 
@@ -14,13 +15,6 @@ function download(filename, content, type) {
   link.download = filename
   link.click()
   URL.revokeObjectURL(url)
-}
-
-function toCsv(subscriptions) {
-  const header = ["name", "url", "accountUrl", "price", "currency", "billingCycle", "status", "startDate", "trialEndDate", "nextChargeDate", "category", "notes"]
-  const escape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`
-  const rows = subscriptions.map((subscription) => header.map((key) => escape(subscription[key])).join(","))
-  return [header.join(","), ...rows].join("\n")
 }
 
 export default function Options() {
@@ -65,10 +59,8 @@ export default function Options() {
     if (!file) return
     try {
       const text = await file.text()
-      const parsed = JSON.parse(text)
-      const incoming = Array.isArray(parsed) ? parsed : parsed?.subscriptions
-      if (!Array.isArray(incoming)) throw new Error("Expected an array of subscriptions")
-      const merged = [...subscriptions.filter((item) => !incoming.some((next) => next.id === item.id)), ...incoming]
+      const incoming = parseImport(text)
+      const merged = mergeImported(subscriptions, incoming)
       await saveSubscriptions(merged)
       setSubscriptions(merged)
       setStatus(`Imported ${incoming.length} record(s)`)
@@ -217,7 +209,7 @@ export default function Options() {
         <div className="flex flex-wrap gap-2">
           <button
             className="btn-ghost"
-            onClick={() => download("subscriptions.json", JSON.stringify(subscriptions, null, 2), "application/json")}>
+            onClick={() => download("subscriptions.json", toJson(subscriptions), "application/json")}>
             Export JSON
           </button>
           <button className="btn-ghost" onClick={() => download("subscriptions.csv", toCsv(subscriptions), "text/csv")}>

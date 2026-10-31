@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from "react"
 import "../styles/tailwind.css"
 import { CATEGORIES, CYCLE, CYCLE_LIST, LIVE_STATUSES, STATUS } from "../lib/constants"
 import { formatMoney, totals } from "../lib/currency"
+import { CATEGORY_FILTERS, EMPTY_FILTER, STATUS_FILTERS, filterSubscriptions } from "../lib/filters"
 import { capabilities } from "../lib/license"
 import { daysUntil, isoDate } from "../lib/schedule"
+import { SNOOZE_OPTIONS, clearSnooze, isSnoozed, snooze, snoozeLabel } from "../lib/snooze"
 import { getSettings, getSubscriptions, removeSubscription, upsertSubscription } from "../lib/storage"
 import { applyStatusChange, createSubscription, sortByNextCharge, validateSubscription } from "../lib/subscription"
 
@@ -46,12 +48,14 @@ export default function Popup() {
   const [form, setForm] = useState(null)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState(EMPTY_FILTER)
 
   const caps = useMemo(() => (settings ? capabilities(subscriptions, settings.license) : null), [subscriptions, settings])
   const summary = useMemo(
     () => totals(subscriptions, settings?.defaultCurrency ?? "USD"),
     [subscriptions, settings]
   )
+  const visible = useMemo(() => filterSubscriptions(subscriptions, filter), [subscriptions, filter])
 
   async function load() {
     const [list, currentSettings] = await Promise.all([getSubscriptions(), getSettings()])
@@ -72,6 +76,10 @@ export default function Popup() {
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
+  }
+
+  function setFilterField(field, value) {
+    setFilter((current) => ({ ...current, [field]: value }))
   }
 
   async function handleSave(event) {
@@ -95,6 +103,16 @@ export default function Popup() {
 
   async function handleStatus(subscription, status) {
     await upsertSubscription(applyStatusChange(subscription, status))
+    await load()
+  }
+
+  async function handleSnooze(subscription, days) {
+    await upsertSubscription(snooze(subscription, days))
+    await load()
+  }
+
+  async function handleWake(subscription) {
+    await upsertSubscription(clearSnooze(subscription))
     await load()
   }
 
@@ -213,6 +231,48 @@ export default function Popup() {
         </form>
       ) : null}
 
+      {subscriptions.length > 0 && (
+        <div className="space-y-2 border-b border-slate-200 bg-white px-3 py-2">
+          <input
+            id="search"
+            type="search"
+            value={filter.query}
+            onChange={(event) => setFilterField("query", event.target.value)}
+            placeholder="Search name, notes, URL"
+            aria-label="Search subscriptions"
+          />
+
+          <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter by status">
+            {STATUS_FILTERS.map((option) => {
+              const active = filter.status === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={active}
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                    active ? "bg-brand-700 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                  onClick={() => setFilterField("status", option.value)}>
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <select
+            id="filterCategory"
+            aria-label="Filter by category"
+            className="!py-1 !text-xs"
+            value={filter.category}
+            onChange={(event) => setFilterField("category", event.target.value)}>
+            {CATEGORY_FILTERS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <ul className="max-h-[320px] space-y-2 overflow-y-auto p-3">
         {subscriptions.length === 0 && (
           <li className="card text-center text-sm text-slate-500">
@@ -220,49 +280,86 @@ export default function Popup() {
           </li>
         )}
 
-        {subscriptions.map((subscription) => (
-          <li key={subscription.id} className="card">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">{subscription.name}</p>
-                <p className="text-xs text-slate-500">
-                  {formatMoney(subscription.price, subscription.currency)} / {subscription.billingCycle} · {dueLabel(subscription)}
-                </p>
-              </div>
-              <span className={`pill ${STATUS_STYLES[subscription.status] ?? "bg-slate-100 text-slate-600"}`}>
-                {subscription.status}
-              </span>
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-1">
-              <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => openForm(subscription)}>Edit</button>
-
-              {LIVE_STATUSES.includes(subscription.status) && (
-                <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => handleStatus(subscription, STATUS.CANCELLED)}>
-                  Mark cancelled
-                </button>
-              )}
-
-              {subscription.status === STATUS.TRIAL && (
-                <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => handleStatus(subscription, STATUS.ACTIVE)}>
-                  Converted
-                </button>
-              )}
-
-              {(subscription.accountUrl || subscription.url) && (
-                <a
-                  className="btn-ghost !px-2 !py-1 !text-xs"
-                  href={subscription.accountUrl || subscription.url}
-                  target="_blank"
-                  rel="noreferrer">
-                  Account
-                </a>
-              )}
-
-              <button className="btn-danger !px-2 !py-1 !text-xs" onClick={() => handleDelete(subscription)}>Delete</button>
-            </div>
+        {subscriptions.length > 0 && visible.length === 0 && (
+          <li className="card text-center text-sm text-slate-500">
+            No records match this filter.
+            <button className="ml-2 text-xs font-medium text-brand-700 hover:underline" onClick={() => setFilter(EMPTY_FILTER)}>
+              Clear
+            </button>
           </li>
-        ))}
+        )}
+
+        {visible.map((subscription) => {
+          const snoozed = isSnoozed(subscription)
+          return (
+            <li key={subscription.id} className="card" data-id={subscription.id} data-status={subscription.status}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">{subscription.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {formatMoney(subscription.price, subscription.currency)} / {subscription.billingCycle} · {dueLabel(subscription)}
+                  </p>
+                  {snoozed && (
+                    <p className="mt-1 text-[11px] font-medium text-amber-700">
+                      🔕 Snoozed · {snoozeLabel(subscription)}
+                    </p>
+                  )}
+                </div>
+                <span className={`pill ${STATUS_STYLES[subscription.status] ?? "bg-slate-100 text-slate-600"}`}>
+                  {subscription.status}
+                </span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => openForm(subscription)}>Edit</button>
+
+                {LIVE_STATUSES.includes(subscription.status) && !snoozed &&
+                  SNOOZE_OPTIONS.map((option) => (
+                    <button
+                      key={option.days}
+                      className="btn-ghost !px-2 !py-1 !text-xs"
+                      aria-label={`Snooze ${subscription.name} for ${option.label}`}
+                      onClick={() => handleSnooze(subscription, option.days)}>
+                      Snooze {option.label === "1 day" ? "1d" : option.label === "3 days" ? "3d" : "1w"}
+                    </button>
+                  ))}
+
+                {snoozed && (
+                  <button
+                    className="btn-ghost !px-2 !py-1 !text-xs"
+                    aria-label={`Wake ${subscription.name}`}
+                    onClick={() => handleWake(subscription)}>
+                    Wake
+                  </button>
+                )}
+
+                {LIVE_STATUSES.includes(subscription.status) && (
+                  <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => handleStatus(subscription, STATUS.CANCELLED)}>
+                    Mark cancelled
+                  </button>
+                )}
+
+                {subscription.status === STATUS.TRIAL && (
+                  <button className="btn-ghost !px-2 !py-1 !text-xs" onClick={() => handleStatus(subscription, STATUS.ACTIVE)}>
+                    Converted
+                  </button>
+                )}
+
+                {(subscription.accountUrl || subscription.url) && (
+                  <a
+                    className="btn-ghost !px-2 !py-1 !text-xs"
+                    href={subscription.accountUrl || subscription.url}
+                    target="_blank"
+                    rel="noreferrer">
+                    Account
+                  </a>
+                )}
+
+                <button className="btn-danger !px-2 !py-1 !text-xs" onClick={() => handleDelete(subscription)}>Delete</button>
+              </div>
+            </li>
+          )
+        })}
       </ul>
 
       <footer className="flex items-center justify-between gap-2 border-t border-slate-200 bg-white px-3 py-2">

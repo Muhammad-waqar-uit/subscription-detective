@@ -6,9 +6,9 @@ Source of truth for *what to build* is [`../subscription-detective-requirements.
 
 ## Where the project stands
 
-- **Built and verified:** the MV3 extension builds, loads in Chromium, adds records, persists them, schedules reminder alarms and enforces the 3-record free cap. `91` unit tests, `19` browser checks, `lint` clean.
-- **Written but unverified:** the detection banner, notifications on screen, badge, export/import, edit/delete, muted sites.
-- **Not built:** filters (FR-19), snooze (FR-26), cloud sync (FR-33), pricing/payments (FR-39).
+- **Built and verified:** the MV3 extension builds, loads in Chromium, adds records, persists them, filters and searches them, snoozes a reminder, schedules the right number of alarms for free vs paid, and enforces the 3-record free cap. The detection banner fires on a real signup page and skips a page that is not one. `146` unit tests, `52` browser checks, `lint` clean.
+- **Written but unverified:** notification delivery, the badge on screen, restart reschedule, export/import through the file picker, edit/delete, removing a muted site, inline edit in the banner.
+- **Not built:** cloud sync (FR-33), pricing/payments (FR-39).
 
 ## Documents
 
@@ -19,9 +19,9 @@ Source of truth for *what to build* is [`../subscription-detective-requirements.
 | [PLAN.md](PLAN.md) | 7 phases with tasks, exit criteria, FR coverage | ✅ Written | 2026-10-31 |
 | [TODO.md](TODO.md) | Step-level checklist: done / written-but-unverified / left | ✅ Living doc | 2026-10-31 |
 | [PROGRESS.md](PROGRESS.md) | Phase status, verification log, bugs found, history | ✅ Living doc | 2026-10-31 |
-| [FEATURES.md](FEATURES.md) | Every FR with a build status marker + evidence | ✅ 18 done / 20 unverified / 4 not started | 2026-10-31 |
+| [FEATURES.md](FEATURES.md) | Every FR with a build status marker + evidence | ✅ 24 done / 16 unverified / 2 not started | 2026-10-31 |
 | [LIMITATIONS.md](LIMITATIONS.md) | Chrome/MV3 constraints, detection accuracy, freemium limits | ✅ Living doc | 2026-10-31 |
-| [TESTING.md](TESTING.md) | Unit, e2e and manual test plan mapped to FRs | 🟨 Automated layers green, manual matrix pending | 2026-10-31 |
+| [TESTING.md](TESTING.md) | Unit, e2e and manual test plan mapped to FRs | 🟨 Automated layers green (146 unit + 52 browser), manual matrix pending | 2026-10-31 |
 
 ## Reading order
 

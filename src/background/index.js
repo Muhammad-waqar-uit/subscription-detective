@@ -3,7 +3,9 @@ import { formatMoney } from "../lib/currency"
 import { capabilities, canAdd } from "../lib/license"
 import { daysUntil } from "../lib/schedule"
 import { createSubscription } from "../lib/subscription"
-import { getSettings, getSubscriptions, saveSubscriptions, upsertSubscription } from "../lib/storage"
+import { addMutedSite } from "../lib/rules/sites"
+import { isSnoozed } from "../lib/snooze"
+import { getSettings, getSubscriptions, saveSettings, saveSubscriptions, upsertSubscription } from "../lib/storage"
 import { advanceLapsedTrials, parseAlarmName, syncAlarms, updateBadge } from "./alarms"
 
 /**
@@ -67,6 +69,7 @@ async function handleAlarm(alarm) {
   const subscription = subscriptions.find((item) => item.id === parsed.id)
   if (!subscription || !LIVE_STATUSES.includes(subscription.status)) return
   if (subscription.reminderDisabled) return
+  if (isSnoozed(subscription)) return
 
   const deadline = subscription.trialEndDate || subscription.nextChargeDate
   const days = daysUntil(deadline)
@@ -154,6 +157,14 @@ async function handleMessage(message = {}) {
       const next = await upsertSubscription(created)
       await refresh("detected subscription saved")
       return { subscription: created, subscriptions: next }
+    }
+
+    // FR-31: the banner can mute the current host without opening options.
+    case "MUTE_SITE": {
+      const settings = await getSettings()
+      const mutedSites = addMutedSite(settings.mutedSites ?? [], message.host)
+      const next = await saveSettings({ mutedSites })
+      return { mutedSites: next.mutedSites }
     }
 
     case "AUTO_DETECT_HINT": {
