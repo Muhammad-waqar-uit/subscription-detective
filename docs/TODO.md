@@ -15,7 +15,7 @@ Last updated: 2026-10-31 (second pass)
 - [x] Create `assets/`, `src/{background,contents,popup,options,lib,components,styles}`, `tests/{unit,e2e}`, `docs/`
 - [x] Write `docs/README.md`, `ARCHITECTURE.md`, `LIMITATIONS.md`, `FOLDER_STRUCTURE.md`, `PLAN.md`, `TODO.md`, `PROGRESS.md`, `FEATURES.md`, `TESTING.md`
 - [x] Verify Plasmo accepts `src/` with folder-form entries (`popup/index.jsx`) — confirmed by a real build
-- [ ] Move `subscription-detective-requirements.md` into `docs/` (left at the root on purpose: it is the user's source file, not build output)
+- [x] Move `subscription-detective-requirements.md` into `docs/` alongside the other docs, with every link updated
 
 ---
 

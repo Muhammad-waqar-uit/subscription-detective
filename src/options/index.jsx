@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 
 import "../styles/tailwind.css"
 import { FREE_LIMIT } from "../lib/constants"
-import { formatMoney } from "../lib/currency"
 import { mergeImported, parseImport, toCsv, toJson } from "../lib/export"
 import { capabilities } from "../lib/license"
 import { getSettings, getSubscriptions, saveSettings, saveSubscriptions, wipeAll } from "../lib/storage"
@@ -198,7 +197,6 @@ export default function Options() {
             <option value="free">free</option>
             <option value="paid">paid</option>
           </select>
-          <span className="text-xs text-slate-500">Total: {formatMoney(0, settings.defaultCurrency)}</span>
         </div>
       </section>
 

@@ -2,7 +2,7 @@
 
 Index of project documentation. **Update the Status column in the same commit as the change it describes.**
 
-Source of truth for *what to build* is [`../subscription-detective-requirements.md`](../subscription-detective-requirements.md) (FR-1 … FR-42, NFR-1 … NFR-10). These docs track *what is built*.
+Source of truth for *what to build* is [`subscription-detective-requirements.md`](subscription-detective-requirements.md) (FR-1 … FR-42, NFR-1 … NFR-10). These docs track *what is built*.
 
 ## Where the project stands
 

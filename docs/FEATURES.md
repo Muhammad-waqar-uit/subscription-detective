@@ -1,6 +1,6 @@
 # Features / requirements status
 
-Every functional requirement from [`../subscription-detective-requirements.md`](../subscription-detective-requirements.md), with the build status and the phase that closes it. Update this table when a feature is verified — not when it is written.
+Every functional requirement from [`subscription-detective-requirements.md`](subscription-detective-requirements.md), with the build status and the phase that closes it. Update this table when a feature is verified — not when it is written.
 
 `⬜ not started · 🟨 written, not verified · ✅ done & verified · ⏸ blocked`
 
