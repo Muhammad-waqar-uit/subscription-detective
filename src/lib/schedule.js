@@ -60,7 +60,7 @@ export function daysUntil(date, now = new Date()) {
 }
 
 /** The date the user should be reminded on, `days` before the deadline. */
-export function reminderAt(subscription, days, now = new Date()) {
+export function reminderAt(subscription, days) {
   const deadline = toDate(subscription?.trialEndDate) ?? toDate(subscription?.nextChargeDate)
   if (!deadline) return null
   const lead = Number(days)
@@ -81,7 +81,7 @@ export function upcomingReminders(subscription, settings, now = new Date()) {
   if (!LIVE_STATUSES.includes(subscription?.status)) return []
 
   return leads
-    .map((days) => ({ days, at: reminderAt(subscription, days, now) }))
+    .map((days) => ({ days, at: reminderAt(subscription, days) }))
     .filter((reminder) => reminder.at && reminder.at.getTime() > startOfDay(now).getTime())
     .sort((a, b) => a.at - b.at)
 }

@@ -4,18 +4,24 @@ Index of project documentation. **Update the Status column in the same commit as
 
 Source of truth for *what to build* is [`../subscription-detective-requirements.md`](../subscription-detective-requirements.md) (FR-1 … FR-42, NFR-1 … NFR-10). These docs track *what is built*.
 
+## Where the project stands
+
+- **Built and verified:** the MV3 extension builds, loads in Chromium, adds records, persists them, schedules reminder alarms and enforces the 3-record free cap. `91` unit tests, `19` browser checks, `lint` clean.
+- **Written but unverified:** the detection banner, notifications on screen, badge, export/import, edit/delete, muted sites.
+- **Not built:** filters (FR-19), snooze (FR-26), cloud sync (FR-33), pricing/payments (FR-39).
+
 ## Documents
 
 | Doc | What it covers | Status | Updated |
 |-----|----------------|--------|---------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Stack, module map, data flow, permissions, detection pipeline, build output | ✅ Written (design only, no code yet) | 2026-10-31 |
-| [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) | Annotated tree + where new code goes | ✅ Written, folders exist | 2026-10-31 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Stack, module map, data flow, permissions, build output, decisions | ✅ Reflects the code | 2026-10-31 |
+| [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) | Annotated tree + where new code goes | ✅ Reflects the code | 2026-10-31 |
 | [PLAN.md](PLAN.md) | 7 phases with tasks, exit criteria, FR coverage | ✅ Written | 2026-10-31 |
-| [TODO.md](TODO.md) | Step-level checklist: done / in progress / left | ✅ Living doc | 2026-10-31 |
-| [PROGRESS.md](PROGRESS.md) | Phase status, verification log, build history | ✅ Living doc | 2026-10-31 |
-| [FEATURES.md](FEATURES.md) | Every FR with a build status marker | ✅ Living doc | 2026-10-31 |
-| [LIMITATIONS.md](LIMITATIONS.md) | Chrome/MV3 constraints, detection accuracy, data-model and freemium limits | ✅ Written (living doc, extended each phase) | 2026-10-31 |
-| [TESTING.md](TESTING.md) | Unit, e2e and manual test plan mapped to FRs | ✅ Planned (runs start Phase 2) | 2026-10-31 |
+| [TODO.md](TODO.md) | Step-level checklist: done / written-but-unverified / left | ✅ Living doc | 2026-10-31 |
+| [PROGRESS.md](PROGRESS.md) | Phase status, verification log, bugs found, history | ✅ Living doc | 2026-10-31 |
+| [FEATURES.md](FEATURES.md) | Every FR with a build status marker + evidence | ✅ 18 done / 20 unverified / 4 not started | 2026-10-31 |
+| [LIMITATIONS.md](LIMITATIONS.md) | Chrome/MV3 constraints, detection accuracy, freemium limits | ✅ Living doc | 2026-10-31 |
+| [TESTING.md](TESTING.md) | Unit, e2e and manual test plan mapped to FRs | 🟨 Automated layers green, manual matrix pending | 2026-10-31 |
 
 ## Reading order
 
@@ -29,7 +35,7 @@ Source of truth for *what to build* is [`../subscription-detective-requirements.
 | Marker | Meaning |
 |--------|---------|
 | ✅ | Done and verified (test, manual check, or explicit evidence noted) |
-| 🟨 | In progress — started, not verified |
+| 🟨 | Written but not verified |
 | ⬜ | Not started |
 | ⏸ | Blocked — reason written next to it |
 

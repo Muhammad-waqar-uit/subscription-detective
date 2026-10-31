@@ -171,6 +171,14 @@ export default function Popup() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="label" htmlFor="category">Category</label>
+              <select id="category" value={form.category} onChange={(event) => update("category", event.target.value)}>
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {form.billingCycle === CYCLE.CUSTOM && (

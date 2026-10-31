@@ -54,7 +54,7 @@ export async function syncAlarms(subscriptions, settings, now = new Date()) {
     if (subscription?.reminderDisabled) continue
 
     for (const days of leads) {
-      const at = reminderAt(subscription, days, now)
+      const at = reminderAt(subscription, days)
       if (!at || at.getTime() <= now.getTime()) continue
       chrome.alarms.create(alarmName(subscription.id, days), { when: at.getTime() })
       scheduled += 1

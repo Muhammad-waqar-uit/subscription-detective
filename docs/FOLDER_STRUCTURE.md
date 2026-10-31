@@ -1,78 +1,101 @@
 # Folder structure
 
-Created 2026-10-31. Folders exist; source files are added phase by phase (see [TODO.md](TODO.md)).
+Created 2026-10-31; updated when the code landed. Everything below exists unless marked.
 
-Project root = this directory. It is **not** a git repo yet (TODO P1-2).
+Project root = this directory. `git init` done, first commit `e55be73`.
 
 ## Tree
 
 ```
 subscription-detective/          # project root
 ├── subscription-detective-requirements.md   # source of truth for scope (FR-1 … FR-42)
-├── package.json                 # ⬜ Phase 1 — scripts, deps, "manifest" key for Plasmo
-├── .prettierrc / .eslintrc      # ⬜ Phase 1
-├── .github/workflows/           # ⬜ Phase 1 — build + BPP publish (requirements §2)
+├── package.json                 # scripts, deps, "manifest" overrides for Plasmo
+├── package-lock.json
+├── tsconfig.json                # required by Plasmo even in a JS project (allowJs)
+├── .eslintrc.json / .prettierrc
+├── .gitignore                   # node_modules/, build/, .plasmo/, *.log, .env*
+├── tailwind.config.js           # content: src/**/*.{js,jsx}
+├── postcss.config.js
+├── vitest.config.mjs            # node environment, tests/unit
 ├── assets/
-│   ├── logo.svg                 # ✅ brand vector source (128 viewBox)
-│   └── icon.png                 # ✅ 512x512 — Plasmo derives 16/32/48/128/256/512
-├── src/                         # all source (Plasmo is configured for the src dir)
+│   ├── logo.svg                 # brand vector source
+│   └── icon.png                 # 512x512 — Plasmo derives 16/32/48/64/128
+├── src/                         # all source; Plasmo is configured for the src dir
 │   ├── background/
-│   │   ├── index.js             # ⬜ service worker entry: alarms, notifications, badge
-│   │   ├── alarms.js            # ⬜ reminder scheduling + reschedule on startup/update
-│   │   └── messages/            # ⬜ Plasmo messaging handlers (popup ↔ background)
+│   │   ├── index.js             # service worker: message router, storage.onChanged,
+│   │   │                        #   onStartup/onInstalled, badge, notification icon
+│   │   ├── alarms.js            # alarm naming/parsing, syncAlarms, alarm → notification
+│   │   └── messages/            # reserved (handlers live in index.js today)
 │   ├── contents/
-│   │   ├── detector.jsx         # ⬜ page detection + CSUI "Track this trial?" banner
-│   │   └── rules/               # ⬜ per-site detection rules (data only, no logic)
+│   │   └── detector.jsx         # page detection + CSUI "Track this subscription?" banner
 │   ├── popup/
-│   │   └── index.jsx            # ⬜ subscription list, spend summary, manual add
+│   │   └── index.jsx            # list, spend summary, add/edit form, delete, status, cap
 │   ├── options/
-│   │   └── index.jsx            # ⬜ settings, license, export/import, delete all
-│   ├── lib/
-│   │   ├── storage.js           # ⬜ @plasmohq/storage wrappers, schema defaults
-│   │   ├── detect.js            # ⬜ keyword/URL matching, scoring
-│   │   ├── parse.js             # ⬜ price, currency, cycle, trial-length parsing
-│   │   ├── schedule.js          # ⬜ next charge date math (date-fns)
-│   │   ├── license.js           # ⬜ free vs paid, limits, offline license cache
-│   │   ├── currency.js          # ⬜ formatting and monthly/yearly normalisation
-│   │   └── types.js             # ⬜ JSDoc typedefs for Subscription / Settings
-│   ├── components/              # ⬜ shared React components (rows, badges, modals)
-│   └── styles/                  # ⬜ Tailwind entry or CSS modules
+│   │   └── index.jsx            # currency, reminders, toggles, license, muted sites,
+│   │                            #   export JSON/CSV, import, delete all
+│   ├── lib/                     # pure logic — no React, no chrome.* (except storage.js)
+│   │   ├── constants.js         # STATUS, CYCLE, CATEGORIES, DEFAULT_SETTINGS, thresholds
+│   │   ├── subscription.js      # createSubscription, applyStatusChange, sorting
+│   │   ├── schedule.js          # nextChargeDate, rollForward, reminderAt, daysUntil
+│   │   ├── currency.js          # formatMoney, toMonthly, toYearly, per-currency totals
+│   │   ├── parse.js             # price, currency, cycle, trial length, JSON-LD
+│   │   ├── detect.js            # scoreSignals, detectCandidate, isManagePage
+│   │   ├── license.js           # isPaid, canAdd, FREE_LIMIT
+│   │   ├── storage.js           # @plasmohq/storage wrappers + schema defaults
+│   │   └── rules/               # data only — consumed by detect.js
+│   │       ├── keywords.js      # trial/subscription vocabulary
+│   │       └── sites.js         # 25 per-site rules (FR-9)
+│   ├── components/              # reserved for shared components (empty today)
+│   └── styles/
+│       └── tailwind.css         # Tailwind entry, imported by popup + options
 ├── tests/
-│   ├── unit/                    # ⬜ Vitest — lib/ is pure and directly testable
-│   └── e2e/                     # ⬜ Playwright — extension loaded in Chromium
+│   ├── unit/                    # Vitest — 6 files, 91 tests
+│   │   ├── schedule.test.js
+│   │   ├── parse.test.js
+│   │   ├── detect.test.js
+│   │   ├── currency.test.js
+│   │   ├── license.test.js
+│   │   └── subscription.test.js
+│   └── e2e/
+│       └── smoke.mjs            # Playwright: loads the built extension in Chromium
+├── build/                       # generated by `plasmo build` (gitignored)
 └── docs/                        # this folder — see README.md
 ```
 
 ## Plasmo rules that decide placement
 
-Plasmo resolves entries **by file path**, so the wrong path silently changes the manifest:
+Plasmo resolves entries **by file path**, so the wrong path silently changes the manifest — this bit us once (see PROGRESS "Bugs found"):
 
-| Path | Becomes |
-|---|---|
-| `src/popup/index.jsx` or `src/popup.jsx` | `action.default_popup` |
-| `src/options/index.jsx` or `src/options.jsx` | `options_ui` page |
-| `src/background/index.js` or `src/background.js` | MV3 service worker |
-| `src/contents/detector.jsx` | content script (adds `contents` entry + host match) |
-| `assets/icon.png` | generated `icons` block |
+| Path | Becomes | Status |
+|---|---|---|
+| `src/popup/index.jsx` or `src/popup.jsx` | `action.default_popup` | ✅ built |
+| `src/options/index.jsx` or `src/options.jsx` | `options_ui` page | ✅ built |
+| `src/background/index.js` or `src/background.js` | MV3 service worker (`static/background/index.js`) | ✅ built |
+| `src/contents/detector.jsx` | content script + host match | ✅ built on `<all_urls>` |
+| `assets/icon.png` | generated `icons` block (hashed filenames) | ✅ built |
 
-Keep every source file inside `src/` — mixing root-level entries with a `src/` dir makes Plasmo miss entries. Anything that is not an entry (logic, components, rules) is imported, never auto-registered.
+Two consequences that shaped this tree:
+
+1. **Never put non-entry files in `src/contents/`** — every file there becomes a content script. Detection rules therefore live in `src/lib/rules/`, imported by `detect.js`.
+2. **Never override `manifest.action`** in `package.json` — it replaces Plasmo's generated object and removes `default_popup`, so the popup silently disappears from the build.
 
 ## Where new code goes
 
 | You are adding… | Location | Rules |
 |---|---|---|
-| Detection keyword/regex | `src/contents/rules/` | Data only; `detect.js` consumes it (FR-9) |
-| Detection or parsing logic | `src/lib/detect.js`, `src/lib/parse.js` | Pure functions, no DOM assumptions beyond a passed-in `Document`; unit tested |
-| Chrome API call (alarms, notifications, storage) | wrappers in `src/lib/` or `src/background/` | UI never calls `chrome.*` directly, so it stays testable |
+| Detection keyword/regex | `src/lib/rules/` | Data only; `detect.js` consumes it (FR-9) |
+| Detection or parsing logic | `src/lib/detect.js`, `src/lib/parse.js` | Pure functions; unit tested |
+| Chrome API call (alarms, notifications, storage) | `src/background/` or `src/lib/storage.js` | UI never calls `chrome.*` directly, so it stays testable |
 | Reminder date math | `src/lib/schedule.js` | Pure; table-driven tests for cycles and month edges |
-| Free/paid gating | `src/lib/license.js` | One gate function; the UI asks it, never re-implements limits (FR-34…FR-38) |
-| Page banner UI | `src/contents/detector.jsx` | Wrap all content-script work in try/catch (NFR-7) — never break the host page |
+| Free/paid gating | `src/lib/license.js` | One gate function; popup and background both ask it, never re-implement limits |
+| Page banner UI | `src/contents/detector.jsx` | Inline styles only; wrap all work in try/catch (NFR-7) |
 | Shared UI | `src/components/` | Presentational, no storage access |
 | Test | `tests/unit/`, `tests/e2e/` | See [TESTING.md](TESTING.md) |
 | Doc | `docs/` | Then update the status table in [README.md](README.md) |
 
 ## Naming
 
-- `lib/` modules: one concern per file, default-exported functions, named after the verb (`parsePrice`, `nextChargeDate`).
+- `lib/` modules: one concern per file, named exports, named after the verb (`parsePrice`, `nextChargeDate`).
 - Content script files: `<purpose>.jsx` — Plasmo derives the script name from the filename.
+- Alarms: `sd:reminder:<subscriptionId>:<leadDays>` — parsed back by `parseAlarmName`.
 - No `index.js` barrels inside `src/lib/`; import the concrete file so bundling stays predictable.

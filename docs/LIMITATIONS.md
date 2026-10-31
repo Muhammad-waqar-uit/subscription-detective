@@ -39,6 +39,24 @@ Known constraints for Subscription Detective v1. Seeded from the requirements (�
 - **The cached licence can be stale** until the next online check (FR-38). Offline users keep whatever state was last verified — deliberate, so the extension never locks out a paying customer on a plane.
 - **Pricing is not final** (FR-39), so plan copy and paywall strings must live in one config, not be scattered through the UI.
 
+## Known gaps in the current build (2026-10-31)
+
+These are accepted-but-unfinished states, not design constraints. They are listed here so nobody discovers them in production.
+
+- **Host access is `<all_urls>`, shipped.** Detection works automatically today, at the cost of Chrome's "read and change all your data on websites you visit" install warning. The optional-permission route was not taken yet, so the trust cost is currently paid in full.
+- **The free tier is not differentiated beyond the record cap.** Free users get both default reminders and export, so FR-36 is only half-true. Either gate the extras or drop the claim.
+- **No payment provider is wired.** `license.js` reads a locally stored licence object; a paid state can only be set by hand, so FR-38 is unproven against a real purchase or refund.
+- **Notification delivery and the badge are unverified.** Alarms are proven to be created; nothing has confirmed that a notification appears, that its button opens the account page, or that the badge count clears at zero.
+- **Snooze (FR-26) and status/category filters (FR-19) do not exist.**
+- **Export/import, delete-all, edit, delete and muted-site removal are written but have never been executed**, in a browser or otherwise.
+- **Content-script cost is unmeasured** (NFR-2), and no accessibility pass (NFR-6) or Edge/Brave check (NFR-8) has been done.
+
+### Testing constraints worth remembering
+
+- **CSUI renders in a shadow root**, so popup Tailwind styles never apply to the banner — it uses inline styles deliberately. Any future restyle must keep that in mind.
+- **Chrome removed the `--load-extension` command-line flags**, so a headed Chrome instance cannot load the unpacked build for automation. The e2e test therefore uses Playwright's bundled Chromium, which still supports it. Manual testing is unaffected (load unpacked from `chrome://extensions`).
+- **`@plasmohq/storage` JSON-serialises values**, so raw `chrome.storage.local` reads return strings. Tests and debug tooling must decode; counting `.length` on the raw value silently measures characters.
+
 ## Not in v1
 
 - Bank/card account linking, email inbox reading, automatic cancellation, mobile app, cloud sync, price-increase alerts, household plans, Firefox/Edge store builds (requirements §1.4, §13).

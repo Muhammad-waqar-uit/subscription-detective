@@ -1,0 +1,19 @@
+{
+  "root": true,
+  "env": { "browser": true, "es2022": true, "webextensions": true, "node": true },
+  "parserOptions": { "ecmaVersion": 2022, "sourceType": "module", "ecmaFeatures": { "jsx": true } },
+  "plugins": ["react"],
+  "extends": ["eslint:recommended", "plugin:react/recommended", "prettier"],
+  "settings": { "react": { "version": "detect" } },
+  "rules": {
+    "react/prop-types": "off",
+    "react/react-in-jsx-scope": "off",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.js", "*.config.js", "vitest.config.mjs"],
+      "env": { "node": true }
+    }
+  ]
+}
