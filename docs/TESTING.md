@@ -81,27 +81,33 @@ Serves `tests/fixtures/` over `http://127.0.0.1:<port>` (a content script does n
 
 Not yet covered by e2e: badge, notification delivery, restart reschedule, export/import through the file picker, muted-site removal in options. Edit, delete and status change are now covered by the smoke suite.
 
-## 4. Manual matrix (Phase 6) ⬜
+## 4. Manual matrix (Phase 6)
 
-Nothing in this table has been run yet.
+Automated layers are green. Rows marked **(automated ✅)** are already proven
+by a Playwright suite; the rest need a human with Chrome open. Rows marked
+**(deferred)** are not built yet — payment, pricing, store, a11y, Edge/Brave,
+localisation — they wait for go-live, not for this test pass.
 
 | # | Check | Expected | Result |
 |---|---|---|---|
 | 1 | Clean profile, install unpacked | Popup opens, empty state explains what to do | ⬜ |
 | 2 | Add a trial, close Chrome, reopen | Reminder still scheduled | ⬜ |
 | 3 | Notification click | Opens the service's account page | ⬜ |
-| 4 | Badge count | Matches charges within 7 days, clears at zero | ⬜ (unit-tested) |
+| 4 | Badge count | Matches charges within 7 days, clears at zero | ⬜ |
 | 5 | 5 real signup pages | Banner appears, name/price prefilled | ⬜ |
 | 6 | A page with no billing content | No banner, no console errors | ⬜ (automated ✅) |
 | 7 | Mute a site, revisit | No banner on that site | ⬜ (automated ✅) |
 | 8 | Export then import | Round-trip loses nothing | ⬜ |
 | 9 | Delete all data | Storage empty, popup back to empty state | ⬜ |
 | 10 | Free tier limit | Prompt appears, nothing lost | ⬜ (automated ✅) |
-| 11 | Licence offline | Paid state resolves from cache with network off | ⏸ no provider yet |
-| 12 | Keyboard-only | Every control reachable, focus visible, dialogs trap and return focus | ⬜ |
-| 13 | Contrast + zoom 200% | Readable, no clipped text | ⬜ |
+| 11 | Licence offline | Paid state resolves from cache with network off | ⏸ deferred — no payment provider |
+| 12 | Keyboard-only | Every control reachable, focus visible, dialogs trap and return focus | ⬜ (deferred) |
+| 13 | Contrast + zoom 200% | Readable, no clipped text | ⬜ (deferred) |
 | 14 | Performance | Content script <50 ms added load (devtools performance) | ⬜ |
-| 15 | Edge and Brave | Installs and runs unchanged (NFR-8) | ⬜ |
+| 15 | Edge and Brave | Installs and runs unchanged (NFR-8) | ⬜ (deferred) |
+
+**To run before shipping:** 1, 2, 3, 4, 5, 8, 9, 14 — all code paths exist,
+they just need a browser. Rows 11–13, 15 are out of v1 scope.
 
 ## 5. Release gate
 
