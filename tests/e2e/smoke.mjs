@@ -139,6 +139,32 @@ try {
   await popup.waitForTimeout(250)
   check("filter: status chip restores the list", (await popup.locator("li[data-id]").count()) === 3)
 
+  // --- edit, delete, status change (FR-15, FR-16) -------------------------
+  await popup.getByRole("button", { name: "Edit Notion" }).click()
+  await popup.waitForSelector("#name")
+  check("edit: opens the form prefilled from the record", (await popup.locator("#name").inputValue()) === "Notion")
+  await popup.fill("#name", "Notion Pro")
+  await popup.click('button[type="submit"]')
+  await popup.waitForTimeout(400)
+  check("edit: new name persisted", ((await popup.textContent("body")) ?? "").includes("Notion Pro"))
+
+  // --- delete (FR-15) ----------------------------------------------------
+  // Register the confirm dialog BEFORE the click — Playwright dismisses it
+  // immediately, so a handler registered afterwards never sees it.
+  await popup.on("dialog", (dialog) => dialog.accept())
+  await popup.getByRole("button", { name: "Delete Figma" }).click()
+  await popup.waitForTimeout(400)
+  const afterDelete = await readStored(popup)
+  check("delete: record removed", afterDelete.every((item) => item.name !== "Figma"), `${afterDelete.length} record(s) left`)
+
+  // --- status change (FR-16) ---------------------------------------------
+  await popup.getByRole("button", { name: "Mark Notion Pro cancelled" }).click()
+  await popup.waitForTimeout(400)
+  const notion = (await readStored(popup)).find((item) => item.name === "Notion Pro")
+  check("status: record marked cancelled", notion?.status === "cancelled", notion?.status)
+  const liveAfterCancel = (await readStored(popup)).filter((item) => ["trial", "active"].includes(item.status))
+  check("status: cancelled records stop counting live", liveAfterCancel.length === 1, `${liveAfterCancel.length} live`)
+
   // --- snooze (FR-26) ----------------------------------------------------
   await popup.getByRole("button", { name: "Snooze Canva for 1 day" }).click()
   await popup.waitForTimeout(500)
@@ -170,15 +196,19 @@ try {
 
   const optionsBody = (await options.textContent("body")) ?? ""
   check("options renders", optionsBody.includes("settings"))
-  check("options shows the record count", optionsBody.includes("3 record(s)"), optionsBody.match(/\\d+ record\\(s\\)/)?.[0])
+  check("options shows the record count", optionsBody.includes("2 record(s)"), optionsBody.match(/\\d+ record\\(s\\)/)?.[0])
   check("options shows the free limit", optionsBody.includes("limit 3"))
   // --- paid tier (FR-35, FR-36) -----------------------------------------
   await options.selectOption("#plan", "paid")
   await options.waitForTimeout(800)
   check("plan: paid state persists", ((await options.textContent("body")) ?? "").includes("Paid"))
 
-  const paidAlarms = await waitForAlarms(options, 6)
-  check("plan: paid schedules every lead time", paidAlarms.length === 6, `${paidAlarms.length} alarm(s)`)
+  // Paid schedules every lead time for every live record. The live count is
+  // driven by the state above (3 added − 1 deleted − 1 cancelled = 1 live),
+  // not hardcoded, so the assertion stays honest as the suite grows.
+  const liveCount = (await readStored(popup)).filter((item) => ["trial", "active"].includes(item.status)).length
+  const paidAlarms = await waitForAlarms(options, liveCount * 2)
+  check("plan: paid schedules every lead time", paidAlarms.length === liveCount * 2, `${paidAlarms.length} alarm(s) for ${liveCount} live record(s)`)
   check("plan: paid includes the 3-day lead", paidAlarms.some((alarm) => alarm.name.endsWith(":3")))
 
   check("options: no page errors", optionErrors.length === 0, optionErrors.slice(0, 2).join(" | "))

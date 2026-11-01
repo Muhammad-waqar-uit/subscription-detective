@@ -44,6 +44,7 @@ export function capabilities(subscriptions, license) {
     used: activeCount(subscriptions),
     remaining: remainingFreeSlots(subscriptions, license),
     canAdd: canAdd(subscriptions, license),
+    canEdit: true,
     multipleReminders: paid,
     customReminderTiming: paid,
     spendSummary: paid,

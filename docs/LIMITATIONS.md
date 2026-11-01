@@ -51,7 +51,7 @@ These are accepted-but-unfinished states, not design constraints. They are liste
 - **Notification delivery and the badge are unverified.** Alarms are proven to be created; nothing has confirmed that a notification appears, that its button opens the account page, or that the badge count clears at zero.
 - **Snooze wakes on a date, not on a change.** A snooze silences reminders until `snoozedUntil`; if the charge date moves earlier while snoozed, the alarm for that lead time is simply not created.
 - **Export/import, delete-all, edit, delete and muted-site removal are written but have never been executed**, in a browser or otherwise. Their string work is unit-tested; the file-picker path is not.
-- **The banner has no inline edit.** It prefills and saves; corrections happen afterwards via **Edit** in the popup (FR-7 is still open).
+- **The banner has inline edit now.** Name, price, currency, billing cycle and trial end are editable before saving; corrections happen in the banner, not afterwards in the popup (FR-7 verified).
 - **Content-script cost is unmeasured** (NFR-2), and no accessibility pass (NFR-6) or Edge/Brave check (NFR-8) has been done.
 
 ### Testing constraints worth remembering

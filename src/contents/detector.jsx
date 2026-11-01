@@ -19,6 +19,9 @@ export default function DetectorBanner() {
   const [hidden, setHidden] = useState(false)
   const [message, setMessage] = useState("")
   const [busy, setBusy] = useState(false)
+  // FR-7: every prefilled field is editable before saving. Draft overrides the
+  // detection hint; untouched fields fall back to what the page produced.
+  const [draft, setDraft] = useState({})
 
   const mutedRef = useRef([])
   const enabledRef = useRef(true)
@@ -109,14 +112,14 @@ export default function DetectorBanner() {
     setBusy(true)
     try {
       const subscription = {
-        name: candidate.name,
+        name: draft.name ?? candidate.name,
         url: candidate.accountUrl || candidate.url,
         accountUrl: candidate.accountUrl || "",
-        price: hints?.price ?? 0,
-        currency: hints?.currency ?? "USD",
-        billingCycle: hints?.billingCycle ?? "monthly",
-        trialDays: hints?.trialDays ?? undefined,
-        nextChargeDate: hints?.renewsOn ?? undefined
+        price: draft.price ? Number(draft.price) : (hints?.price ?? 0),
+        currency: draft.currency ?? hints?.currency ?? "USD",
+        billingCycle: draft.billingCycle ?? hints?.billingCycle ?? "monthly",
+        trialDays: draft.trialEndDate && hints?.trialDays ? undefined : hints?.trialDays,
+        nextChargeDate: draft.trialEndDate ?? hints?.renewsOn ?? undefined
       }
 
       const response = await chrome.runtime.sendMessage({ type: "SAVE_DETECTED", subscription })
@@ -196,6 +199,55 @@ export default function DetectorBanner() {
       {hints?.trialDays ? (
         <p style={{ margin: "0 0 8px", color: "#6d7688", fontSize: "12px" }}>{hints.trialDays}-day trial detected</p>
       ) : null}
+
+      {/* FR-7: editable prefilled fields before saving */}
+      <div style={{ display: "grid", gap: "6px", marginBottom: "8px" }}>
+        <input
+          type="text"
+          placeholder="Service name"
+          defaultValue={draft.name ?? candidate.name}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+          style={{ padding: "6px 8px", border: "1px solid #dde1e8", borderRadius: "6px", fontSize: "12px", width: "100%", boxSizing: "border-box" }}
+        />
+        <div style={{ display: "flex", gap: "6px" }}>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="Price"
+            defaultValue={draft.price ?? hints?.price ?? ""}
+            onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+            style={{ flex: 1, padding: "6px 8px", border: "1px solid #dde1e8", borderRadius: "6px", fontSize: "12px", boxSizing: "border-box" }}
+          />
+          <select
+            defaultValue={draft.currency ?? hints?.currency ?? "USD"}
+            onChange={(e) => setDraft({ ...draft, currency: e.target.value })}
+            style={{ width: "70px", padding: "6px 8px", border: "1px solid #dde1e8", borderRadius: "6px", fontSize: "12px", boxSizing: "border-box" }}>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="INR">INR</option>
+            <option value="CAD">CAD</option>
+            <option value="AUD">AUD</option>
+          </select>
+        </div>
+        <select
+          defaultValue={draft.billingCycle ?? hints?.billingCycle ?? "monthly"}
+          onChange={(e) => setDraft({ ...draft, billingCycle: e.target.value })}
+          style={{ padding: "6px 8px", border: "1px solid #dde1e8", borderRadius: "6px", fontSize: "12px", width: "100%", boxSizing: "border-box" }}>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        {hints?.trialDays && (
+          <input
+            type="date"
+            defaultValue={draft.trialEndDate ?? (hints?.renewsOn ?? "")}
+            onChange={(e) => setDraft({ ...draft, trialEndDate: e.target.value })}
+            style={{ padding: "6px 8px", border: "1px solid #dde1e8", borderRadius: "6px", fontSize: "12px", width: "100%", boxSizing: "border-box" }}
+            placeholder="Trial end date"
+          />
+        )}
+      </div>
 
       {message ? <p style={{ margin: "0 0 8px", color: "#2e343f", fontSize: "12px" }}>{message}</p> : null}
 

@@ -79,7 +79,7 @@ Serves `tests/fixtures/` over `http://127.0.0.1:<port>` (a content script does n
 
 **Watch out:** `@plasmohq/storage` JSON-serialises values, so `chrome.storage.local.get("subscriptions")` returns a **string**. Decode it before asserting — a raw `.length` is the string length (this once produced a convincing fake failure of "393 records").
 
-Not yet covered by e2e: edit, delete, status change, badge, notification delivery, restart reschedule, export/import through the file picker, inline edit in the banner.
+Not yet covered by e2e: badge, notification delivery, restart reschedule, export/import through the file picker, muted-site removal in options. Edit, delete and status change are now covered by the smoke suite.
 
 ## 4. Manual matrix (Phase 6) ⬜
 

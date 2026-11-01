@@ -50,12 +50,12 @@ Last updated: 2026-11-01 (doc sync — roadmap surfaced in README, all docs re-d
 - [x] Manual add form with validation (name required, price ≥ 0, dates coherent) — verified in browser
 - [x] Spend summary (monthly + yearly) — verified in browser
 - [x] Category select on the form (FR-12 field)
-- [ ] Edit + delete with confirmation — written, **not exercised** in the browser
-- [ ] Status control: trial / active / cancelled / expired — written, not exercised
+- [x] Edit + delete with confirmation — verified in the browser (smoke suite)
+- [x] Status control: trial / active / cancelled / expired — cancelled path verified in the browser (smoke suite); trial→active "converted" still unexercised
 - [x] Options shell: default currency, detection on/off, notifications on/off, reminder timing — renders, zero page errors
 - [ ] Verify persistence across a real Chrome restart
 
-**Exit:** FR-12…FR-14, FR-17, FR-19, FR-26, FR-40 verified. FR-15 (edit/delete/status in the browser) still open.
+**Exit:** FR-12…FR-14, FR-15, FR-17, FR-19, FR-26, FR-40 verified. FR-16 (trial→active "converted") still open.
 
 ---
 
@@ -84,7 +84,7 @@ Last updated: 2026-11-01 (doc sync — roadmap surfaced in README, all docs re-d
 - [x] MutationObserver, throttled, for SPA route changes
 - [x] CSUI banner: "Track this subscription?" Confirm / Dismiss, inline styles (a CSUI shadow root does not receive Tailwind)
 - [x] Prefill on the banner (FR-6) — verified: name, `USD 12`, monthly, 14-day trial
-- [ ] Inline edit before saving (FR-7) — not in the banner; fields are editable after save via **Edit**
+- [x] Inline edit before saving (FR-7) — every prefilled field is editable in the banner before saving; inline corrections are saved
 - [x] Mute current site from the banner (FR-11)
 - [x] Everything wrapped in try/catch (NFR-7); no `innerHTML`, all page text rendered as text nodes (NFR-10)
 - [ ] Measure added load time (<50 ms, NFR-2)

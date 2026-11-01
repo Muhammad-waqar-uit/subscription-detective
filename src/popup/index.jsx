@@ -93,7 +93,7 @@ export default function Popup() {
   }, [])
 
   function openForm(preset = {}) {
-    if (caps && !caps.canAdd) return
+    if (caps && !caps.canAdd && !preset.id) return
     setErrors({})
     setForm({ ...EMPTY_FORM, currency: settings?.defaultCurrency ?? "USD", ...preset })
   }

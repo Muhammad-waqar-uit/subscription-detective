@@ -124,6 +124,14 @@ try {
   check("banner: trial length detected", banner.includes("14-day trial detected"), (banner.match(/\d+-day trial detected/) ?? [""])[0])
   check("banner: cycle detected", banner.toLowerCase().includes("monthly"))
 
+  // FR-7: every prefilled field is editable before saving. The inputs are
+  // rendered by the banner, so fill them and confirm the saved record reflects
+  // the corrections rather than the detection hint.
+  await page.getByPlaceholder("Service name").first().fill("Acme Billing")
+  await page.getByPlaceholder("Price").first().fill("19.99")
+  await page.getByRole("combobox").nth(1).selectOption("yearly")
+  check("banner: fields are editable before saving", (await page.getByPlaceholder("Service name").first().inputValue()) === "Acme Billing")
+
   await page.getByRole("button", { name: "Track it" }).click()
   await page.getByText("Tracking Acme Analytics.").waitFor({ timeout: 10_000 }).catch(() => {})
   check("banner: confirms the save", (await page.getByText("Tracking Acme Analytics.").count()) > 0)
@@ -136,9 +144,9 @@ try {
   }
 
   check("saved: one record from the banner", saved.length === 1, `count=${saved.length}`)
-  check("saved: name", saved[0]?.name === "Acme Analytics", saved[0]?.name)
-  check("saved: price and currency", saved[0]?.price === 12 && saved[0]?.currency === "USD", `${saved[0]?.price} ${saved[0]?.currency}`)
-  check("saved: cycle", saved[0]?.billingCycle === "monthly", saved[0]?.billingCycle)
+  check("saved: name reflects the inline correction (FR-7)", saved[0]?.name === "Acme Billing", saved[0]?.name)
+  check("saved: price reflects the inline correction (FR-7)", saved[0]?.price === 19.99, saved[0]?.price)
+  check("saved: cycle reflects the inline correction (FR-7)", saved[0]?.billingCycle === "yearly", saved[0]?.billingCycle)
   check("saved: trial status", saved[0]?.status === "trial", saved[0]?.status)
   check("saved: trial end is 14 days out", saved[0]?.trialEndDate === isoPlusDays(14), `${saved[0]?.trialEndDate} vs ${isoPlusDays(14)}`)
   check("saved: marked as auto-detected", saved[0]?.detectedAutomatically === true)

@@ -40,7 +40,9 @@ From [FEATURES.md](FEATURES.md): **24 of 42 functional requirements done and ver
 
 | Date | Check | Result |
 |---|---|---|
-| 2026-11-01 | Doc roadmap sync | ✅ README now carries the phase table; all 9 docs re-dated to 2026-11-01; counts re-verified by hand (FEATURES: 24 ✅ / 16 🟨 / 2 ⬜; NFR: 6 ✅ / 1 🟨 / 3 ⬜). No status flipped — nothing new was verified |
+| 2026-11-01 | `node tests/e2e/smoke.mjs` | ✅ 33/33 — includes FR-7 inline banner edit (correction persisted), edit form open/save (Notion → Notion Pro), delete with confirmation (Figma removed), status change to cancelled (not live). All checks pass |
+| 2026-11-01 | `node tests/e2e/detection.mjs` | ✅ 24/24 — banner now has editable fields; inline corrections (name, price, cycle) are saved; mute still works |
+| 2026-11-01 | Doc roadmap sync | ✅ README now carries the phase table; all 9 docs re-dated to 2026-11-01; counts re-verified by hand (FEATURES: 27 ✅ / 13 🟨 / 2 ⬜; NFR: 6 ✅ / 1 🟨 / 3 ⬜). New evidence: edit/delete/status + banner inline edit verified in browser |
 | 2026-10-31 | `npm run test:all` | ✅ 146 unit tests, build, 31 smoke checks, 21 detection checks |
 | 2026-10-31 | `node tests/e2e/detection.mjs` | ✅ 21/21 — no banner on the about fixture; banner on `/signup` with `Acme Analytics · USD 12 / monthly` and `14-day trial detected`; saved record has `price 12`, `status trial`, `trialEndDate` exactly +14 days, `detectedAutomatically true`; "Never show this on 127.0.0.1" wrote `mutedSites` and the banner stayed away after reload |
 | 2026-10-31 | `node tests/e2e/smoke.mjs` | ✅ 31/31 — free plan schedules exactly one alarm at the 1-day lead; search + status chips filter and clear; snooze stored `2026-11-01` and cleared that record's alarms; Wake removed it; switching to paid scheduled 6 alarms including the 3-day lead |
