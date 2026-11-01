@@ -1,6 +1,6 @@
 # Testing
 
-Last updated: 2026-10-31 (second pass). **Automated layers are live and green; the manual matrix has not been run.**
+Last updated: 2026-11-01 (doc sync — roadmap surfaced in README; manual matrix still untouched). **Automated layers are live and green; the manual matrix has not been run.**
 
 ## Commands
 

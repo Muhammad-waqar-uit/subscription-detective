@@ -2,6 +2,8 @@
 
 7 phases, derived from requirements §10. Each phase has a goal, a task list, **exit criteria** (the only thing that makes it ✅), and the FR IDs it closes. Task-level checkboxes live in [TODO.md](TODO.md); current state lives in [PROGRESS.md](PROGRESS.md).
 
+Status as of **2026-11-01**: Phases 0–1 ✅, 2–6 🟨, 7 ⬜. The phase table in [README.md](../README.md) is the short version of this roadmap.
+
 Guiding constraint: **P0 before P1 before P2**, and nothing in Phase 5+ starts before Phase 4 detection works, because the free limit only means something once tracking is real.
 
 ---

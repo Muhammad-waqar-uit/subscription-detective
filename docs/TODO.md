@@ -4,7 +4,7 @@ Step-level checklist. **A box is ticked only when the thing was actually verifie
 
 `✅ done · 🟨 written but unverified · ⬜ not started · ⏸ blocked`
 
-Last updated: 2026-10-31 (second pass)
+Last updated: 2026-11-01 (doc sync — roadmap surfaced in README, all docs re-dated; no box flipped, nothing new verified)
 
 ---
 

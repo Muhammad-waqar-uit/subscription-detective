@@ -4,7 +4,7 @@ Every functional requirement from [`subscription-detective-requirements.md`](sub
 
 `⬜ not started · 🟨 written, not verified · ✅ done & verified · ⏸ blocked`
 
-Last updated: 2026-10-31 (after the detection and interaction test pass) — **24 / 42 done and verified · 16 written but unverified · 2 not started.**
+Last updated: 2026-11-01 (doc sync — roadmap surfaced in README; counts re-verified by hand, no status flipped) — **24 / 42 done and verified · 16 written but unverified · 2 not started.**
 
 Legend for the evidence column: **U** = unit test (`npm test`), **B** = browser smoke test (`node tests/e2e/smoke.mjs`), **D** = detection browser test (`node tests/e2e/detection.mjs`), **M** = manifest/build inspection, **–** = nothing yet.
 

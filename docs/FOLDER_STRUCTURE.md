@@ -2,6 +2,8 @@
 
 Created 2026-10-31; updated when the code landed. Everything below exists unless marked.
 
+Re-checked 2026-11-01 against the tree on disk — no `src/` change since, so the tree above is still accurate.
+
 Project root = this directory. `git init` done, first commit `e55be73`.
 
 ## Tree

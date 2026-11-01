@@ -199,6 +199,20 @@ Annotated tree and placement rules: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUC
 
 ## Status and roadmap
 
+**Last verified: 2026-11-01** — `npm run test:all` green (146 unit + 52 browser
+checks), `npm run lint` clean, `npm run build` produces a loadable build.
+
+| Phase | Scope | Status |
+|---|-------|--------|
+| 0 | Documentation & structure | ✅ Done |
+| 1 | Setup (builds, loads, lint, scripts) | ✅ Done — CI workflow outstanding |
+| 2 | Core storage & UI | 🟨 Mostly done — edit/delete/status unexercised in browser |
+| 3 | Reminders | 🟨 Mostly done — notification delivery + toolbar badge unverified |
+| 4 | Detection MVP | 🟨 Mechanics verified on fixtures; real-page hit rate unmeasured |
+| 5 | Freemium | 🟨 Partial — no payment provider wired |
+| 6 | Polish & QA | 🟨 Mostly done — a11y, localisation, Edge/Brave unchecked |
+| 7 | Launch | ⬜ Not started |
+
 **Working and verified in a real browser:** detection on a signup page, capture
 with one click, storage, filters, snooze, free-tier cap, free-vs-paid reminder
 counts, options, mute.
@@ -216,7 +230,7 @@ before saving.
 
 Requirements coverage is tracked honestly in
 [docs/FEATURES.md](docs/FEATURES.md): 24 of 42 verified, 16 written but
-unverified, 2 not started.
+unverified, 2 not started (plus 6 of 10 non-functional requirements verified).
 
 ## Contributing
 

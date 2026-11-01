@@ -39,7 +39,9 @@ Known constraints for Subscription Detective v1. Seeded from the requirements (�
 - **The cached licence can be stale** until the next online check (FR-38). Offline users keep whatever state was last verified — deliberate, so the extension never locks out a paying customer on a plane.
 - **Pricing is not final** (FR-39), so plan copy and paywall strings must live in one config, not be scattered through the UI.
 
-## Known gaps in the current build (2026-10-31)
+## Known gaps in the current build (2026-11-01)
+
+Unchanged since 2026-10-31 — nothing in this list has been resolved or worsened during the doc sync.
 
 These are accepted-but-unfinished states, not design constraints. They are listed here so nobody discovers them in production.
 

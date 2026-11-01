@@ -2,6 +2,8 @@
 
 Written as design first; updated 2026-10-31 once the code existed, so the module map and the decisions below reflect what is actually in `src/`.
 
+Re-checked 2026-11-01 against the tree on disk — no `src/` change since, so the module map and the decisions table are still accurate.
+
 ## Stack
 
 | Area | Choice | Why / caveat |
