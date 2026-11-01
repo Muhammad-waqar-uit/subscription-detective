@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/manifest-v3-4B32C3" alt="Manifest V3" />
   <img src="https://img.shields.io/badge/tests-146%20passing-2ea043" alt="146 unit tests passing" />
-  <img src="https://img.shields.io/badge/browser%20checks-52-2ea043" alt="52 browser checks" />
+  <img src="https://img.shields.io/badge/browser%20checks-57-2ea043" alt="57 browser checks" />
   <img src="https://img.shields.io/badge/built%20with-Plasmo-6D28D9" alt="Built with Plasmo" />
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" />
 </p>
@@ -150,7 +150,7 @@ Full detail, including the data model and the decisions behind it:
 
 ```bash
 npm test               # 146 unit tests, 10 files
-npm run test:e2e       # 52 browser checks across two Playwright suites
+npm run test:e2e       # 57 browser checks across two Playwright suites
 npm run test:all       # everything, in the right order
 ```
 
@@ -161,9 +161,9 @@ npm run test:all       # everything, in the right order
 | `tests/e2e/detection.mjs` | Serves `tests/fixtures/` over localhost and drives the real banner: positive page, negative page, save, mute |
 
 Not covered automatically: notification delivery on screen, the toolbar badge,
-restart rescheduling, export/import through a file picker, accessibility, and a
-live-site detection hit rate. Details and the manual matrix live in
-[docs/TESTING.md](docs/TESTING.md).
+restart rescheduling, export/import through a file picker, muted-site removal in
+options, accessibility, and a live-site detection hit rate. Details and the manual
+matrix live in [docs/TESTING.md](docs/TESTING.md).
 
 ## Project structure
 
@@ -197,40 +197,41 @@ Annotated tree and placement rules: [docs/FOLDER_STRUCTURE.md](docs/FOLDER_STRUC
 | [Testing](docs/TESTING.md) | Commands, coverage, manual matrix |
 | [Limitations](docs/LIMITATIONS.md) | Known constraints before promising anything |
 
+
+Issues and pull requests are welcome. Please keep the layering intact — React
+only in the UI entries, `chrome.*` only in `src/background/` and
+`src/lib/storage.js` — and run `npm run test:all` before opening a PR. Update the
+matching doc in `docs/` in the same commit; a phase is only done when its exit
+criteria are met and the evidence is recorded.
+
 ## Status and roadmap
 
-**Last verified: 2026-11-01** — `npm run test:all` green (146 unit + 52 browser
+**Last verified: 2026-11-01** — `npm run test:all` green (146 unit + 57 browser
 checks), `npm run lint` clean, `npm run build` produces a loadable build.
 
 | Phase | Scope | Status |
 |---|-------|--------|
-| 0 | Documentation & structure | ✅ Done |
-| 1 | Setup (builds, loads, lint, scripts) | ✅ Done — CI workflow outstanding |
-| 2 | Core storage & UI | 🟨 Mostly done — edit/delete/status unexercised in browser |
-| 3 | Reminders | 🟨 Mostly done — notification delivery + toolbar badge unverified |
-| 4 | Detection MVP | 🟨 Mechanics verified on fixtures; real-page hit rate unmeasured |
-| 5 | Freemium | 🟨 Partial — no payment provider wired |
-| 6 | Polish & QA | 🟨 Mostly done — a11y, localisation, Edge/Brave unchecked |
-| 7 | Launch | ⬜ Not started |
+| 0 | Documentation & structure | Done |
+| 1 | Setup (builds, loads, lint, scripts) | Done — CI workflow outstanding |
+| 2 | Core storage & UI | Done — edit/delete/status exercised in smoke suite |
+| 3 | Reminders | Deferred from v1 — alarms fire; notification delivery + badge need permissions |
+| 4 | Detection MVP | Done — inline edit before save (FR-7) verified |
+| 5 | Freemium | Deferred from v1 — paywall gated; payment provider not wired |
+| 6 | Polish & QA | Deferred from v1 — a11y, localisation, Edge/Brave unchecked |
+| 7 | Launch | Not started |
 
 **Working and verified in a real browser:** detection on a signup page, capture
-with one click, storage, filters, snooze, free-tier cap, free-vs-paid reminder
-counts, options, mute.
+with one click, inline edit before save (FR-7), storage, filters, snooze, free-tier cap, free-vs-paid reminder
+counts, options, mute, edit, delete, status change.
 
-**Built but not yet exercised:** notification delivery, badge, restart
-reschedule, export/import through the file picker, edit/delete, inline edit
-before saving.
+**Deferred from v1 (post-v1):** notification delivery, toolbar badge, restart
+reschedule, export/import through the file picker, muted-site removal in options, accessibility audit, localisation, Edge/Brave check.
 
-**Not built:**
-
-- [ ] Payment provider and pricing (the paid plan is a local flag today)
-- [ ] Optional encrypted sync (post-v1)
-- [ ] Manage-page detection flow (FR-8)
-- [ ] Accessibility audit, localisation, Edge/Brave check
+**Not built (out of scope):** payment provider and pricing, encrypted cloud sync (FR-33), store submission.
 
 Requirements coverage is tracked honestly in
-[docs/FEATURES.md](docs/FEATURES.md): 24 of 42 verified, 16 written but
-unverified, 2 not started (plus 6 of 10 non-functional requirements verified).
+[docs/FEATURES.md](docs/FEATURES.md): 27 of 42 verified, 13 written but
+unverified, 2 not started (post-v1).
 
 ## Contributing
 
