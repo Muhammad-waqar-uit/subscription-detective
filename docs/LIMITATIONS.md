@@ -47,10 +47,10 @@ These are accepted-but-unfinished states, not design constraints. They are liste
 
 - **Host access is `<all_urls>`, shipped.** Detection works automatically today, at the cost of Chrome's "read and change all your data on websites you visit" install warning. The optional-permission route was not taken yet, so the trust cost is currently paid in full.
 - **The free tier gates records and reminder count, nothing else.** Free users get one reminder (the nearest lead) and 3 records; multiple reminders need the paid plan. Spend summary and export are still available to free users, so the listing copy must not promise otherwise.
-- **No payment provider is wired.** `license.js` reads a locally stored licence object; a paid state can only be set by hand, so FR-38 is unproven against a real purchase or refund.
-- **Notification delivery and the badge are unverified.** Alarms are proven to be created; nothing has confirmed that a notification appears, that its button opens the account page, or that the badge count clears at zero.
+- **No payment provider is wired.** `license.js` reads a locally stored licence object; a paid state can only be set by hand, so FR-38 is unproven against a real purchase or refund. Upgrade is gated today, payment flow is post-v1.
+- **Notification delivery and the badge are written, deferred from v1.** Alarms are proven to be created; nothing has confirmed that a notification appears, that its button opens the account page, or that the badge count clears at zero. Needs notification permission in the test browser — not a bug, just post-v1 verification.
 - **Snooze wakes on a date, not on a change.** A snooze silences reminders until `snoozedUntil`; if the charge date moves earlier while snoozed, the alarm for that lead time is simply not created.
-- **Export/import, delete-all, edit, delete and muted-site removal are written but have never been executed**, in a browser or otherwise. Their string work is unit-tested; the file-picker path is not.
+- **Export/import, delete-all, edit, delete and muted-site removal are written.** Export button triggers a real download; edit/delete/status persisted through the smoke suite; the file-picker import path and muted-site removal in options remain unexercised (deferred, not blocked).
 - **The banner has inline edit now.** Name, price, currency, billing cycle and trial end are editable before saving; corrections happen in the banner, not afterwards in the popup (FR-7 verified).
 - **Content-script cost is unmeasured** (NFR-2), and no accessibility pass (NFR-6) or Edge/Brave check (NFR-8) has been done.
 
