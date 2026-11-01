@@ -102,6 +102,29 @@ Other scripts:
 | `npm run test:all` | Unit tests → build → both browser suites |
 | `npm run lint` / `npm run format` | ESLint / Prettier |
 
+## Release
+
+Releases are automated via GitHub Actions. To publish a new version:
+
+1. **Bump version** and tag the commit:
+   ```bash
+   git tag vX.Y.Z  # e.g. v0.2.0
+   git push origin vX.Y.Z
+   ```
+2. **Workflow runs**: tests → build → publishes `chrome-mv3-prod.zip` and release notes.
+3. **Notes**: if `RELEASE_NOTES_vX.Y.Z.md` exists, it's used; otherwise notes are generated from git log since the previous tag.
+
+No release happens on regular `main` pushes — only on `v*` tags.
+
+| Command | What it does |
+|---|---|
+| `npm run build` | Production build |
+| `npm run package` | Zip for the Chrome Web Store |
+| `npm test` | Unit tests (Vitest) |
+| `npm run test:e2e` | Browser suites against the built extension (Playwright) |
+| `npm run test:all` | Unit tests → build → both browser suites |
+| `npm run lint` / `npm run format` | ESLint / Prettier |
+
 ## Usage
 
 1. **Sign up for a trial.** If the page looks like a trial or subscription
