@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - run: npm test
+      - run: npm run build
+
+      - name: Extract release notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Use RELEASE_NOTES_*.md if it exists, otherwise generate from git log
+          NOTES_FILE=$(ls RELEASE_NOTES_${TAG}*.md 2>/dev/null || true)
+          if [ -n "$NOTES_FILE" ]; then
+            echo "notes=$(cat "$NOTES_FILE")" >> "$GITHUB_OUTPUT"
+          else
+            echo "notes=### $TAG" >> "$GITHUB_OUTPUT"
+            echo "" >> "$GITHUB_OUTPUT"
+            git log $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD --pretty=format:"- %s" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref }}
+          name: ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.notes }}
+          artifacts: build/chrome-mv3-prod.zip
+          draft: false
+          prerelease: false
